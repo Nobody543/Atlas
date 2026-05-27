@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Atlas — The Atlas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --ink:#1a1814;--ink-light:#3d3830;--muted:#7a7165;--faint:#c8bfb0;
+  --paper:#f5f0e8;--paper-warm:#ede6d6;--paper-dark:#ddd3c0;--cream:#faf7f2;
+  --moss:#3d5a3e;--moss-light:#5a7a5b;--moss-pale:#c8d9c8;
+  --rust:#8b3a2a;--rust-light:#b85a40;--rust-pale:#e8c8bc;
+  --amber:#7a5a1a;--amber-pale:#e8d8a8;--sky:#2a4a6a;
+  --font-display:'Playfair Display',Georgia,serif;
+  --font-body:'DM Sans',system-ui,sans-serif;
+  --tr:0.3s cubic-bezier(0.4,0,0.2,1);
+  --pad:clamp(1.1rem,4vw,2.5rem);
+  --card-w:300px;
+  --safe-top:env(safe-area-inset-top,0px);
+  --safe-bottom:env(safe-area-inset-bottom,0px);
+  --safe-left:env(safe-area-inset-left,0px);
+  --safe-right:env(safe-area-inset-right,0px);
+}
+@media(max-width:600px){:root{--pad:1.1rem;--card-w:calc(100vw - 3rem);}}
+html{scroll-behavior:smooth;}
+body{background:var(--cream);color:var(--ink);font-family:var(--font-body);font-weight:300;min-height:100vh;min-height:-webkit-fill-available;overflow-x:hidden;}
+
+/* NAV */
+.site-nav{background:var(--ink);color:var(--paper);padding:calc(0.9rem + var(--safe-top)) var(--pad) 0.9rem;display:flex;align-items:center;gap:0.6rem;position:sticky;top:0;z-index:100;overflow-x:auto;scrollbar-width:none;}
+.site-nav::-webkit-scrollbar{display:none;}
+.nav-brand{font-family:var(--font-display);font-size:1.1rem;font-weight:400;white-space:nowrap;margin-right:0.4rem;flex-shrink:0;}
+.nav-sep{color:rgba(255,255,255,0.15);flex-shrink:0;}
+.nav-link{background:none;border:none;color:rgba(255,255,255,0.5);font-family:var(--font-body);font-size:0.72rem;letter-spacing:0.1em;text-transform:uppercase;padding:0.4rem 0.7rem;border-radius:2rem;cursor:pointer;transition:var(--tr);white-space:nowrap;text-decoration:none;font-weight:400;flex-shrink:0;-webkit-tap-highlight-color:transparent;}
+.nav-link:hover,.nav-link.active{color:var(--paper);background:rgba(255,255,255,0.15);}
+.nav-add-btn{background:none;border:1px solid rgba(255,255,255,0.2);color:var(--paper);font-family:var(--font-body);font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;padding:0.4rem 0.85rem;border-radius:2rem;cursor:pointer;transition:var(--tr);white-space:nowrap;margin-left:auto;flex-shrink:0;-webkit-tap-highlight-color:transparent;}
+.nav-add-btn:hover{background:rgba(255,255,255,0.12);border-color:rgba(255,255,255,0.45);}
+
+/* BREADCRUMB */
+.breadcrumb{display:flex;align-items:center;gap:0.4rem;font-size:0.75rem;color:var(--faint);flex-wrap:wrap;}
+.breadcrumb span{cursor:pointer;transition:color 0.2s;-webkit-tap-highlight-color:transparent;}
+.breadcrumb span:hover{color:var(--paper);}
+.breadcrumb .sep{color:rgba(255,255,255,0.2);}
+
+/* VIEWS */
+.view{display:none;}
+.view.active{display:block;}
+
+/* ─── YEAR VIEW ─── */
+.year-view{padding:2.5rem var(--pad);padding-left:calc(var(--pad) + var(--safe-left));padding-right:calc(var(--pad) + var(--safe-right));padding-bottom:calc(2.5rem + var(--safe-bottom));}
+.view-heading{font-family:var(--font-display);font-size:clamp(2rem,6vw,2.8rem);font-weight:400;color:var(--ink);margin-bottom:0.4rem;}
+.view-heading em{font-style:italic;color:var(--muted);}
+.view-sub{font-size:0.75rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:2rem;font-weight:400;}
+
+.carousel-wrapper{overflow:hidden;cursor:grab;}
+.carousel-wrapper.dragging{cursor:grabbing;}
+.carousel-track{display:flex;gap:1.2rem;transition:transform 0.45s cubic-bezier(0.4,0,0.2,1);padding:0.5rem 0 1.5rem;will-change:transform;}
+.carousel-track.no-tr{transition:none;}
+
+.year-card{flex:0 0 var(--card-w);background:var(--paper);border:1px solid var(--paper-dark);border-radius:6px;padding:1.6rem;cursor:pointer;transition:var(--tr);position:relative;overflow:hidden;-webkit-tap-highlight-color:transparent;user-select:none;}
+.year-card::before{content:'';position:absolute;top:0;left:0;width:4px;height:100%;background:var(--paper-dark);transition:var(--tr);}
+@media(hover:hover){.year-card:hover{transform:translateY(-4px);box-shadow:0 12px 40px rgba(26,24,20,0.12);border-color:var(--muted);}.year-card:hover::before{background:var(--moss);}}
+.year-card:active{transform:scale(0.98);}
+.year-card.has-goal::before{background:var(--moss);}
+.year-card.completed::before{background:var(--amber);}
+
+.year-number{font-family:var(--font-display);font-size:3rem;font-weight:400;color:var(--paper-dark);line-height:1;margin-bottom:0.8rem;transition:color 0.2s;}
+.year-card.has-goal .year-number{color:var(--ink-light);}
+.goal-preview{font-size:0.88rem;color:var(--ink-light);line-height:1.5;margin-bottom:0.9rem;font-style:italic;font-family:var(--font-display);min-height:2.6rem;}
+.goal-empty{font-size:0.72rem;color:var(--faint);letter-spacing:0.08em;text-transform:uppercase;min-height:2.6rem;display:flex;align-items:center;font-family:var(--font-body);}
+.stats-row{display:flex;gap:0.8rem;font-size:0.68rem;letter-spacing:0.07em;text-transform:uppercase;color:var(--muted);margin-bottom:1rem;font-weight:400;flex-wrap:wrap;}
+.stat{display:flex;align-items:center;gap:0.3rem;}
+.stat-dot{width:6px;height:6px;border-radius:50%;background:var(--faint);display:inline-block;}
+.stat-dot.moss{background:var(--moss-light);}
+.stat-dot.rust{background:var(--rust-light);}
+.stat-dot.amber{background:var(--amber);}
+.status-badge{display:inline-flex;align-items:center;gap:0.4rem;font-size:0.68rem;letter-spacing:0.09em;text-transform:uppercase;padding:0.28rem 0.65rem;border-radius:2rem;font-weight:500;border:1px solid;}
+.badge-empty{color:var(--faint);border-color:var(--paper-dark);background:var(--paper-warm);}
+.badge-active{color:var(--moss);border-color:var(--moss-pale);background:#eef4ee;}
+.badge-done{color:var(--amber);border-color:var(--amber-pale);background:#f5edda;}
+
+.carousel-controls{display:flex;align-items:center;gap:0.8rem;margin-top:0.8rem;}
+.carousel-btn{background:var(--ink);color:var(--paper);border:none;width:40px;height:40px;border-radius:50%;cursor:pointer;font-size:1.1rem;display:flex;align-items:center;justify-content:center;transition:var(--tr);flex-shrink:0;-webkit-tap-highlight-color:transparent;}
+@media(max-width:600px){.carousel-btn{display:none;}}
+.carousel-btn:hover{background:var(--moss);}
+.carousel-btn:disabled{background:var(--paper-dark);cursor:not-allowed;}
+.carousel-dots{display:flex;gap:0.4rem;}
+.carousel-dot{width:6px;height:6px;border-radius:50%;background:var(--faint);cursor:pointer;transition:var(--tr);border:none;padding:0;-webkit-tap-highlight-color:transparent;}
+.carousel-dot.active{background:var(--ink);width:20px;border-radius:3px;}
+.add-year-btn{background:transparent;border:1.5px dashed var(--paper-dark);border-radius:6px;padding:1.6rem;cursor:pointer;font-family:var(--font-body);font-size:0.75rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);transition:var(--tr);flex:0 0 180px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0.6rem;-webkit-tap-highlight-color:transparent;}
+@media(max-width:600px){.add-year-btn{flex:0 0 140px;}}
+.add-year-btn:hover{border-color:var(--moss);color:var(--moss);background:#f0f5f0;}
+.add-year-plus{font-size:1.8rem;line-height:1;}
+
+/* ─── MONTH VIEW ─── */
+.month-view{padding:2rem var(--pad);padding-left:calc(var(--pad) + var(--safe-left));padding-right:calc(var(--pad) + var(--safe-right));padding-bottom:calc(2rem + var(--safe-bottom));}
+
+.year-hero{display:grid;grid-template-columns:1fr 1fr;gap:2rem;margin-bottom:2.5rem;background:var(--ink);color:var(--paper);border-radius:6px;padding:2rem;position:relative;overflow:hidden;}
+@media(max-width:680px){.year-hero{grid-template-columns:1fr;gap:1.5rem;padding:1.4rem;}}
+.year-hero::after{content:attr(data-year);position:absolute;right:-1rem;bottom:-2rem;font-family:var(--font-display);font-size:clamp(5rem,18vw,10rem);font-weight:600;color:rgba(255,255,255,0.04);line-height:1;pointer-events:none;user-select:none;}
+.year-hero-left,.year-hero-right{position:relative;z-index:1;}
+.hero-label{font-size:0.65rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--faint);margin-bottom:0.7rem;font-weight:400;}
+.goal-input-group{display:flex;flex-direction:column;gap:0.6rem;}
+.goal-input-group textarea{background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.15);color:var(--paper);font-family:var(--font-display);font-size:0.95rem;font-style:italic;padding:0.75rem 0.9rem;border-radius:4px;resize:none;height:76px;outline:none;transition:border-color 0.2s;width:100%;-webkit-appearance:none;}
+.goal-input-group textarea::placeholder{color:rgba(200,191,176,0.4);}
+.goal-input-group textarea:focus{border-color:rgba(255,255,255,0.4);}
+.toggle-complete{display:inline-flex;align-items:center;gap:0.5rem;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);color:var(--paper);font-family:var(--font-body);font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;padding:0.5rem 1rem;border-radius:2rem;cursor:pointer;transition:var(--tr);font-weight:400;width:fit-content;min-height:40px;-webkit-tap-highlight-color:transparent;}
+.toggle-complete:hover{background:rgba(255,255,255,0.15);}
+.toggle-complete.done{background:rgba(122,90,26,0.3);border-color:rgba(232,216,168,0.4);color:var(--amber-pale);}
+.hero-progress{margin-top:1.2rem;}
+.progress-label{font-size:0.65rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--faint);margin-bottom:0.5rem;display:flex;justify-content:space-between;}
+.progress-bar{height:3px;background:rgba(255,255,255,0.1);border-radius:2px;overflow:hidden;}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--moss-light),#8ab88a);border-radius:2px;transition:width 0.6s cubic-bezier(0.4,0,0.2,1);}
+
+.months-heading{font-family:var(--font-display);font-size:1rem;font-weight:400;color:var(--muted);margin-bottom:1.2rem;}
+.months-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;}
+@media(max-width:500px){.months-grid{grid-template-columns:repeat(2,1fr);gap:0.7rem;}}
+
+.month-card{background:var(--paper);border:1px solid var(--paper-dark);border-radius:6px;overflow:hidden;transition:var(--tr);cursor:pointer;-webkit-tap-highlight-color:transparent;}
+@media(hover:hover){.month-card:hover{border-color:var(--muted);box-shadow:0 6px 24px rgba(26,24,20,0.1);transform:translateY(-2px);}}
+.month-card:active{transform:scale(0.97);}
+.month-header{padding:0.75rem 1rem 0.6rem;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--paper-dark);}
+.month-name{font-family:var(--font-display);font-size:0.95rem;font-weight:400;color:var(--ink);}
+@media(max-width:500px){.month-name{font-size:0.85rem;}}
+.month-dots{display:flex;gap:0.3rem;align-items:center;}
+.m-dot{width:7px;height:7px;border-radius:50%;background:var(--paper-dark);}
+.m-dot.skill{background:var(--moss-light);}
+.m-dot.adv{background:var(--rust-light);}
+.month-body{padding:0.75rem 1rem;}
+.month-skill-row{font-size:0.78rem;color:var(--ink-light);margin-bottom:0.5rem;display:flex;align-items:flex-start;gap:0.4rem;}
+.m-preview-label{font-size:0.62rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);flex-shrink:0;padding-top:0.12rem;font-weight:400;}
+.m-preview-val{font-style:italic;font-family:var(--font-display);line-height:1.3;}
+.m-preview-empty{color:var(--faint);font-size:0.7rem;font-style:normal;font-family:var(--font-body);}
+.adv-tag{display:inline-block;font-size:0.62rem;letter-spacing:0.06em;text-transform:uppercase;padding:0.16rem 0.5rem;border-radius:2rem;background:var(--rust-pale);color:var(--rust);font-weight:500;margin-top:0.35rem;}
+
+/* ─── MONTH DETAIL ─── */
+.month-detail-view{padding:2rem var(--pad);padding-left:calc(var(--pad) + var(--safe-left));padding-right:calc(var(--pad) + var(--safe-right));padding-bottom:calc(2rem + var(--safe-bottom));}
+.month-detail-header{margin-bottom:2rem;}
+.month-detail-title{font-family:var(--font-display);font-size:clamp(2rem,8vw,3rem);font-weight:400;color:var(--ink);line-height:1;}
+.month-detail-year-label{font-size:0.7rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);margin-top:0.4rem;font-weight:400;}
+
+.detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.2rem;}
+@media(max-width:680px){.detail-grid{grid-template-columns:1fr;}}
+.detail-panel{background:var(--paper);border:1px solid var(--paper-dark);border-radius:6px;overflow:hidden;}
+.detail-panel.full-width{grid-column:1/-1;}
+.panel-header{padding:0.85rem 1.2rem;border-bottom:1px solid var(--paper-dark);display:flex;align-items:center;justify-content:space-between;}
+.panel-title{font-size:0.65rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--muted);font-weight:500;}
+.panel-accent{width:22px;height:3px;border-radius:2px;}
+.panel-accent.moss{background:var(--moss-light);}
+.panel-accent.rust{background:var(--rust-light);}
+.panel-accent.amber{background:var(--amber);}
+.panel-body{padding:1.2rem;}
+
+.skill-section input{width:100%;background:var(--cream);border:1px solid var(--paper-dark);border-radius:4px;font-family:var(--font-display);font-size:0.95rem;font-style:italic;color:var(--ink);padding:0.75rem 0.9rem;outline:none;transition:border-color 0.2s;-webkit-appearance:none;min-height:44px;}
+.skill-section input:focus{border-color:var(--moss-light);}
+.skill-toggle-complete{display:inline-flex;align-items:center;gap:0.5rem;margin-top:0.8rem;background:transparent;border:1px solid var(--paper-dark);color:var(--muted);font-family:var(--font-body);font-size:0.7rem;letter-spacing:0.08em;text-transform:uppercase;padding:0.5rem 0.9rem;border-radius:2rem;cursor:pointer;transition:var(--tr);font-weight:400;min-height:40px;-webkit-tap-highlight-color:transparent;}
+.skill-toggle-complete:hover{border-color:var(--moss);color:var(--moss);}
+.skill-toggle-complete.done{background:#eef4ee;border-color:var(--moss-pale);color:var(--moss);}
+.streak-label{font-size:0.68rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);margin-top:1rem;margin-bottom:0.5rem;font-weight:400;}
+.streak-row{display:flex;gap:4px;flex-wrap:wrap;}
+.streak-day{width:26px;height:26px;border-radius:4px;background:var(--paper-dark);cursor:pointer;transition:background 0.15s;border:none;-webkit-tap-highlight-color:transparent;flex-shrink:0;}
+@media(max-width:600px){.streak-day{width:28px;height:28px;}}
+.streak-day.done{background:var(--moss-light);}
+.streak-day:active{opacity:0.7;}
+.streak-info{font-size:0.7rem;color:var(--muted);margin-top:0.5rem;}
+
+.bimonthly-note{background:var(--rust-pale);border:1px solid rgba(139,58,42,0.15);border-radius:4px;padding:0.5rem 0.8rem;font-size:0.72rem;color:var(--rust);margin-bottom:0.8rem;line-height:1.4;}
+.adventures-list{display:flex;flex-direction:column;gap:0.6rem;}
+.adventure-item{background:var(--cream);border:1px solid var(--paper-dark);border-radius:4px;padding:0.7rem 0.9rem;display:flex;align-items:flex-start;gap:0.7rem;}
+.adv-dot{width:10px;height:10px;border-radius:50%;background:var(--rust-light);flex-shrink:0;margin-top:0.22rem;}
+.adv-dot.done{background:var(--amber);}
+.adv-content{flex:1;min-width:0;}
+.adv-name{font-family:var(--font-display);font-size:0.88rem;color:var(--ink);font-style:italic;word-break:break-word;}
+.adv-action{background:none;border:none;cursor:pointer;font-size:1rem;color:var(--faint);padding:0.2rem 0.3rem;transition:color 0.2s;min-width:30px;min-height:30px;display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent;}
+.adv-action:hover,.adv-action.done{color:var(--amber);}
+.adv-del:hover{color:var(--rust)!important;}
+.add-adv-form{margin-top:0.7rem;display:flex;gap:0.5rem;}
+.add-adv-form input{flex:1;background:var(--cream);border:1px solid var(--paper-dark);border-radius:4px;font-family:var(--font-body);font-size:0.85rem;color:var(--ink);padding:0.6rem 0.8rem;outline:none;transition:border-color 0.2s;-webkit-appearance:none;min-height:44px;}
+.add-adv-form input:focus{border-color:var(--rust-light);}
+.add-adv-form button{background:var(--rust-light);color:white;border:none;border-radius:4px;padding:0.6rem 1rem;font-size:0.8rem;cursor:pointer;font-family:var(--font-body);transition:background 0.2s;min-height:44px;white-space:nowrap;-webkit-tap-highlight-color:transparent;}
+.add-adv-form button:hover{background:var(--rust);}
+
+.notes-textarea{width:100%;background:var(--cream);border:1px solid var(--paper-dark);border-radius:4px;font-family:var(--font-body);font-size:0.85rem;color:var(--ink);padding:0.8rem 1rem;outline:none;transition:border-color 0.2s;resize:none;min-height:100px;line-height:1.6;-webkit-appearance:none;}
+.notes-textarea:focus{border-color:var(--sky);}
+.save-ind{font-size:0.68rem;color:var(--muted);margin-top:0.4rem;}
+.save-ind.saved{color:var(--moss);}
+
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(26,24,20,0.6);display:flex;align-items:flex-end;justify-content:center;z-index:200;opacity:0;pointer-events:none;transition:opacity 0.2s;padding-bottom:var(--safe-bottom);}
+@media(min-width:500px){.modal-overlay{align-items:center;}}
+.modal-overlay.open{opacity:1;pointer-events:all;}
+.modal{background:var(--cream);border-radius:12px 12px 0 0;padding:2rem;width:100%;max-width:460px;transform:translateY(20px);transition:transform 0.28s cubic-bezier(0.4,0,0.2,1);padding-bottom:calc(2rem + var(--safe-bottom));}
+@media(min-width:500px){.modal{border-radius:8px;padding-bottom:2rem;transform:translateY(12px);}}
+.modal-overlay.open .modal{transform:translateY(0);}
+.modal h3{font-family:var(--font-display);font-size:1.4rem;margin-bottom:0.5rem;font-weight:400;}
+.modal p{font-size:0.84rem;color:var(--muted);margin-bottom:1.2rem;}
+.modal input{width:100%;background:var(--paper);border:1px solid var(--paper-dark);border-radius:4px;font-family:var(--font-body);font-size:1rem;color:var(--ink);padding:0.75rem 1rem;outline:none;margin-bottom:1rem;min-height:48px;-webkit-appearance:none;}
+.modal input:focus{border-color:var(--moss-light);}
+.modal-actions{display:flex;gap:0.7rem;justify-content:flex-end;}
+.btn-cancel{background:transparent;border:1px solid var(--paper-dark);color:var(--muted);font-family:var(--font-body);font-size:0.82rem;padding:0.55rem 1.2rem;border-radius:2rem;cursor:pointer;transition:var(--tr);min-height:44px;-webkit-tap-highlight-color:transparent;}
+.btn-cancel:hover{border-color:var(--muted);}
+.btn-confirm{background:var(--ink);border:1px solid var(--ink);color:var(--paper);font-family:var(--font-body);font-size:0.82rem;padding:0.55rem 1.4rem;border-radius:2rem;cursor:pointer;transition:var(--tr);min-height:44px;-webkit-tap-highlight-color:transparent;}
+.btn-confirm:hover{background:var(--moss);border-color:var(--moss);}
+</style>
+</head>
+<body>
+
+<nav class="site-nav">
+  <span class="nav-brand">The Atlas</span>
+  <span class="nav-sep">|</span>
+  <a class="nav-link" href="today.html">Today</a>
+  <a class="nav-link active" href="atlas.html">Atlas</a>
+  <a class="nav-link" href="history.html">History</a>
+  <a class="nav-link" href="notes.html">Notes</a>
+  <a class="nav-link" href="values.html">Values</a>
+  <a class="nav-link" href="selfhelp.html">Self Help</a>
+  <div class="breadcrumb" id="breadcrumb" style="margin-left:auto;"></div>
+  <button class="nav-add-btn" onclick="openAddYearModal()">+ New Year</button>
+</nav>
+
+<!-- YEAR VIEW -->
+<div class="view active" id="view-years">
+  <div class="year-view">
+    <h2 class="view-heading">Your <em>chapters.</em></h2>
+    <p class="view-sub">Each year, one great ambition</p>
+    <div class="carousel-wrapper" id="carousel-wrapper">
+      <div class="carousel-track" id="carousel-track"></div>
+    </div>
+    <div class="carousel-controls">
+      <button class="carousel-btn" id="carousel-prev" onclick="carouselPrev()">&#8592;</button>
+      <div class="carousel-dots" id="carousel-dots"></div>
+      <button class="carousel-btn" id="carousel-next" onclick="carouselNext()">&#8594;</button>
+    </div>
+  </div>
+</div>
+
+<!-- MONTH VIEW -->
+<div class="view" id="view-months">
+  <div class="month-view">
+    <div class="year-hero" id="year-hero" data-year="">
+      <div class="year-hero-left">
+        <p class="hero-label">Annual goal</p>
+        <div class="goal-input-group">
+          <textarea id="hero-goal-input" placeholder="Set your goal for this year…" rows="2" oninput="saveYearGoal()"></textarea>
+          <div style="display:flex;gap:0.7rem;align-items:center;">
+            <button class="toggle-complete" id="year-complete-btn" onclick="toggleYearComplete()">
+              <span class="check-icon">○</span> <span>Mark complete</span>
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="year-hero-right">
+        <p class="hero-label">Progress at a glance</p>
+        <div id="hero-stats" style="color:var(--faint);font-size:0.8rem;line-height:1.8;margin-bottom:1rem;"></div>
+        <div class="hero-progress">
+          <div class="progress-label"><span>Skills learned</span><span id="hero-progress-pct">0%</span></div>
+          <div class="progress-bar"><div class="progress-fill" id="hero-progress-fill" style="width:0%"></div></div>
+        </div>
+      </div>
+    </div>
+    <p class="months-heading">The twelve months</p>
+    <div class="months-grid" id="months-grid"></div>
+  </div>
+</div>
+
+<!-- MONTH DETAIL VIEW -->
+<div class="view" id="view-month-detail">
+  <div class="month-detail-view">
+    <div class="month-detail-header">
+      <h2 class="month-detail-title" id="detail-month-name"></h2>
+      <p class="month-detail-year-label" id="detail-year-label"></p>
+    </div>
+    <div class="detail-grid">
+      <div class="detail-panel">
+        <div class="panel-header"><span class="panel-title">Monthly skill</span><div class="panel-accent moss"></div></div>
+        <div class="panel-body">
+          <div class="skill-section">
+            <input type="text" id="skill-input" placeholder="What will you learn this month?" oninput="saveMonthData()"/>
+            <p class="streak-label">10-min daily streak</p>
+            <div class="streak-row" id="streak-row"></div>
+            <p class="streak-info" id="streak-info"></p>
+            <button class="skill-toggle-complete" id="skill-done-btn" onclick="toggleSkillDone()"><span>○</span> Mark skill complete</button>
+          </div>
+        </div>
+      </div>
+      <div class="detail-panel">
+        <div class="panel-header"><span class="panel-title">Mini adventure</span><div class="panel-accent rust"></div></div>
+        <div class="panel-body">
+          <p class="bimonthly-note">📍 Adventures run every 2 months — add to any month that feels right</p>
+          <div class="adventures-list" id="adventures-list"></div>
+          <div class="add-adv-form">
+            <input type="text" id="adventure-input" placeholder="Where will you go?"/>
+            <button onclick="addAdventure()">Add</button>
+          </div>
+        </div>
+      </div>
+      <div class="detail-panel full-width">
+        <div class="panel-header"><span class="panel-title">Notes & reflections</span><div class="panel-accent amber"></div></div>
+        <div class="panel-body">
+          <textarea class="notes-textarea" id="notes-input" placeholder="Thoughts, plans, reflections for this month…" oninput="saveMonthData()"></textarea>
+          <p class="save-ind" id="save-indicator">Autosaved</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ADD YEAR MODAL -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal">
+    <h3>Add a new year</h3>
+    <p>Enter the year you'd like to track. You can set your annual goal once it's created.</p>
+    <input type="number" id="new-year-input" placeholder="e.g. 2025" min="2000" max="2100"/>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+      <button class="btn-confirm" onclick="confirmAddYear()">Add year</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const KEY = 'lt_data';
+const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+function getDaysInMonth(m, y) {
+  if (m===1) return (y%4===0&&(y%100!==0||y%400===0))?29:28;
+  return [31,28,29,31,30,31,30,31,31,30,31,30,31][m];
+}
+
+function loadData() {
+  try {
+    const d = JSON.parse(localStorage.getItem(KEY)) || {};
+    if (!d.atlas) d.atlas = {};
+    return d;
+  } catch { return {atlas:{}}; }
+}
+function saveAll() { localStorage.setItem(KEY, JSON.stringify(allData)); }
+
+let allData = loadData();
+// atlas lives at allData.atlas
+function data() { return allData.atlas; }
+function getYears() { return Object.keys(allData.atlas).map(Number).sort((a,b)=>a-b); }
+
+let currentYear = null, currentMonth = null, carouselOffset = 0;
+
+// ── CAROUSEL ──
+const CARDS_VISIBLE = 3;
+let carouselMax = 0;
+function getCardWidth() {
+  const mobile = window.innerWidth <= 600;
+  return (mobile ? window.innerWidth - 48 : 300) + (mobile ? 19 : 24);
+}
+
+function renderYearView() {
+  const track = document.getElementById('carousel-track');
+  const dotsEl = document.getElementById('carousel-dots');
+  track.innerHTML = ''; dotsEl.innerHTML = '';
+  const years = getYears();
+  if (!years.length) {
+    track.innerHTML = `<div style="color:var(--muted);font-style:italic;font-size:0.9rem;padding:2rem 0;">No years yet. Click "+ New Year" to begin.</div>`;
+    return;
+  }
+  years.forEach(yr => {
+    const yd = allData.atlas[yr] || {};
+    const goalSet = !!yd.goal, completed = !!yd.completed;
+    const skillCount = Object.values(yd.months||{}).filter(m=>m.skill).length;
+    const advCount = Object.values(yd.months||{}).reduce((acc,m)=>acc+(m.adventures||[]).length,0);
+    const skillsDone = Object.values(yd.months||{}).filter(m=>m.skillDone).length;
+    let bc='badge-empty',bt='Not started';
+    if (completed){bc='badge-done';bt='✓ Complete';}
+    else if (goalSet){bc='badge-active';bt='In progress';}
+    const card = document.createElement('div');
+    card.className = `year-card${goalSet?' has-goal':''}${completed?' completed':''}`;
+    card.innerHTML = `<div class="year-number">${yr}</div>
+      ${goalSet?`<div class="goal-preview">"${yd.goal.length>80?yd.goal.slice(0,80)+'…':yd.goal}"</div>`:`<div class="goal-empty">No goal set yet</div>`}
+      <div class="stats-row">
+        <span class="stat"><span class="stat-dot moss"></span>${skillCount} skills</span>
+        <span class="stat"><span class="stat-dot rust"></span>${advCount} adventures</span>
+        ${skillsDone>0?`<span class="stat"><span class="stat-dot amber"></span>${skillsDone} done</span>`:''}
+      </div>
+      <span class="status-badge ${bc}">${bt}</span>`;
+    card.onclick = () => openYear(yr);
+    track.appendChild(card);
+  });
+  const addBtn = document.createElement('button');
+  addBtn.className='add-year-btn';
+  addBtn.innerHTML='<span class="add-year-plus">+</span><span>New year</span>';
+  addBtn.onclick=openAddYearModal;
+  track.appendChild(addBtn);
+  const total = years.length+1;
+  const vis = window.innerWidth<=600?1:CARDS_VISIBLE;
+  carouselMax = Math.max(0, total-vis);
+  for (let i=0;i<=carouselMax;i++) {
+    const dot=document.createElement('button');
+    dot.className='carousel-dot'+(i===carouselOffset?' active':'');
+    dot.onclick=()=>{carouselOffset=i;applyCarousel();};
+    dotsEl.appendChild(dot);
+  }
+  applyCarousel();
+}
+
+function applyCarousel() {
+  const track=document.getElementById('carousel-track');
+  track.style.transform=`translateX(-${carouselOffset*getCardWidth()}px)`;
+  document.getElementById('carousel-prev').disabled=carouselOffset===0;
+  document.getElementById('carousel-next').disabled=carouselOffset>=carouselMax;
+  document.querySelectorAll('.carousel-dot').forEach((d,i)=>d.classList.toggle('active',i===carouselOffset));
+}
+function carouselPrev(){if(carouselOffset>0){carouselOffset--;applyCarousel();}}
+function carouselNext(){if(carouselOffset<carouselMax){carouselOffset++;applyCarousel();}}
+
+// Touch swipe
+(function(){
+  let sx=0,sy=0,dragging=false,moved=false;
+  function start(e){const pt=e.touches?e.touches[0]:e;sx=pt.clientX;sy=pt.clientY;dragging=true;moved=false;document.getElementById('carousel-track').classList.add('no-tr');document.getElementById('carousel-wrapper').classList.add('dragging');}
+  function move(e){if(!dragging)return;const pt=e.touches?e.touches[0]:e;const dx=pt.clientX-sx,dy=pt.clientY-sy;if(Math.abs(dx)>Math.abs(dy)){moved=true;if(e.cancelable)e.preventDefault();}}
+  function end(e){if(!dragging)return;dragging=false;document.getElementById('carousel-track').classList.remove('no-tr');document.getElementById('carousel-wrapper').classList.remove('dragging');if(!moved)return;const pt=e.changedTouches?e.changedTouches[0]:e;const dx=pt.clientX-sx;if(dx<-50&&carouselOffset<carouselMax){carouselOffset++;applyCarousel();}else if(dx>50&&carouselOffset>0){carouselOffset--;applyCarousel();}else{applyCarousel();}}
+  document.addEventListener('DOMContentLoaded',()=>{const w=document.querySelector('.carousel-wrapper');if(!w)return;w.addEventListener('touchstart',start,{passive:true});w.addEventListener('touchmove',move,{passive:false});w.addEventListener('touchend',end);w.addEventListener('mousedown',start);document.addEventListener('mousemove',move);document.addEventListener('mouseup',end);});
+})();
+
+window.addEventListener('resize',()=>{if(document.getElementById('view-years').classList.contains('active')){carouselOffset=0;renderYearView();}});
+
+// ── NAVIGATION ──
+function showView(id){document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));document.getElementById('view-'+id).classList.add('active');}
+function showYearView(){currentYear=null;currentMonth=null;carouselOffset=0;showView('years');renderYearView();updateBC();}
+function openYear(yr){currentYear=yr;currentMonth=null;if(!allData.atlas[yr])allData.atlas[yr]={goal:'',completed:false,months:{}};showView('months');renderMonthView();updateBC();}
+function openMonth(mi){currentMonth=mi;showView('month-detail');renderMonthDetail();updateBC();}
+
+function updateBC(){
+  const bc=document.getElementById('breadcrumb');
+  let h=`<span onclick="showYearView()">Years</span>`;
+  if(currentYear!==null)h+=`<span class="sep">›</span><span onclick="openYear(${currentYear})">${currentYear}</span>`;
+  if(currentMonth!==null)h+=`<span class="sep">›</span><span>${MONTHS[currentMonth]}</span>`;
+  bc.innerHTML=h;
+}
+
+// ── MONTH VIEW ──
+function renderMonthView(){
+  const yd=allData.atlas[currentYear]||{};
+  document.getElementById('year-hero').setAttribute('data-year',currentYear);
+  document.getElementById('hero-goal-input').value=yd.goal||'';
+  updateYearCompleteBtn();renderHeroStats();
+  const grid=document.getElementById('months-grid');
+  grid.innerHTML='';
+  for(let i=0;i<12;i++){
+    const md=(yd.months||{})[i]||{};
+    const hasSkill=!!md.skill,advs=md.adventures||[],skillDone=!!md.skillDone;
+    const card=document.createElement('div');
+    card.className='month-card';
+    card.innerHTML=`<div class="month-header"><span class="month-name">${MONTHS[i]}</span><div class="month-dots"><div class="m-dot${hasSkill?' skill':''}"></div><div class="m-dot${advs.length?' adv':''}"></div></div></div>
+      <div class="month-body">
+        <div class="month-skill-row"><span class="m-preview-label">Skill</span>${hasSkill?`<span class="m-preview-val">${md.skill.length>38?md.skill.slice(0,38)+'…':md.skill}</span>`:`<span class="m-preview-empty">Not set</span>`}</div>
+        ${advs.length?`<span class="adv-tag">📍 ${advs[0].name.length>26?advs[0].name.slice(0,26)+'…':advs[0].name}</span>`:`<div style="font-size:0.7rem;color:var(--faint);margin-top:0.3rem;">No adventure planned</div>`}
+        ${skillDone?`<div style="font-size:0.68rem;color:var(--moss);margin-top:0.4rem;letter-spacing:0.06em;text-transform:uppercase;font-weight:500;">✓ Skill done</div>`:''}
+      </div>`;
+    card.onclick=()=>openMonth(i);
+    grid.appendChild(card);
+  }
+}
+
+function renderHeroStats(){
+  const months=allData.atlas[currentYear]?.months||{};
+  const sd=Object.values(months).filter(m=>m.skillDone).length;
+  const ss=Object.values(months).filter(m=>m.skill).length;
+  const adv=Object.values(months).reduce((a,m)=>a+(m.adventures||[]).length,0);
+  const pct=Math.round(sd/12*100);
+  document.getElementById('hero-stats').innerHTML=`<div>${ss}/12 months have a skill set</div><div>${sd} skills marked complete</div><div>${adv} adventure${adv!==1?'s':''} planned</div>`;
+  document.getElementById('hero-progress-pct').textContent=pct+'%';
+  document.getElementById('hero-progress-fill').style.width=pct+'%';
+}
+
+function saveYearGoal(){
+  if(!allData.atlas[currentYear])allData.atlas[currentYear]={goal:'',completed:false,months:{}};
+  allData.atlas[currentYear].goal=document.getElementById('hero-goal-input').value;
+  saveAll();
+}
+function toggleYearComplete(){
+  allData.atlas[currentYear].completed=!allData.atlas[currentYear].completed;
+  saveAll();updateYearCompleteBtn();
+}
+function updateYearCompleteBtn(){
+  const btn=document.getElementById('year-complete-btn');
+  const done=(allData.atlas[currentYear]||{}).completed;
+  btn.classList.toggle('done',done);
+  btn.innerHTML=done?`<span class="check-icon">✓</span> <span>Completed!</span>`:`<span class="check-icon">○</span> <span>Mark complete</span>`;
+}
+
+// ── MONTH DETAIL ──
+function getMD(){
+  const a=allData.atlas;
+  if(!a[currentYear])a[currentYear]={goal:'',completed:false,months:{}};
+  if(!a[currentYear].months)a[currentYear].months={};
+  if(!a[currentYear].months[currentMonth])a[currentYear].months[currentMonth]={skill:'',skillDone:false,streak:[],adventures:[],notes:''};
+  return a[currentYear].months[currentMonth];
+}
+
+function renderMonthDetail(){
+  const md=getMD();
+  const days=getDaysInMonth(currentMonth,currentYear);
+  document.getElementById('detail-month-name').textContent=MONTHS[currentMonth];
+  document.getElementById('detail-year-label').textContent=currentYear;
+  document.getElementById('skill-input').value=md.skill||'';
+  document.getElementById('notes-input').value=md.notes||'';
+  document.getElementById('save-indicator').textContent='Autosaved';
+  document.getElementById('save-indicator').className='save-ind saved';
+  updateSkillDoneBtn();renderStreak(days);renderAdventures();
+}
+
+function renderStreak(days){
+  const md=getMD(),streak=md.streak||[];
+  const row=document.getElementById('streak-row');
+  row.innerHTML='';
+  for(let d=1;d<=days;d++){
+    const btn=document.createElement('button');
+    btn.className='streak-day'+(streak.includes(d)?' done':'');
+    btn.title=`Day ${d}`;
+    btn.onclick=()=>toggleStreakDay(d,days);
+    row.appendChild(btn);
+  }
+  document.getElementById('streak-info').textContent=`${streak.filter(d=>d>=1&&d<=days).length} of ${days} days`;
+}
+
+function toggleStreakDay(day,days){const md=getMD();if(!md.streak)md.streak=[];const i=md.streak.indexOf(day);if(i>-1)md.streak.splice(i,1);else md.streak.push(day);saveAll();renderStreak(days);}
+function toggleSkillDone(){const md=getMD();md.skillDone=!md.skillDone;saveAll();updateSkillDoneBtn();}
+function updateSkillDoneBtn(){const md=getMD();const btn=document.getElementById('skill-done-btn');btn.classList.toggle('done',!!md.skillDone);btn.innerHTML=md.skillDone?'<span>✓</span> Skill complete!':'<span>○</span> Mark skill complete';}
+
+function renderAdventures(){
+  const md=getMD();
+  document.getElementById('adventures-list').innerHTML=(md.adventures||[]).map((a,i)=>`
+    <div class="adventure-item">
+      <div class="adv-dot${a.done?' done':''}"></div>
+      <div class="adv-content"><div class="adv-name">${a.name}</div></div>
+      <button class="adv-action${a.done?' done':''}" onclick="toggleAdv(${i})">${a.done?'✓':'○'}</button>
+      <button class="adv-action adv-del" onclick="delAdv(${i})">✕</button>
+    </div>`).join('');
+}
+
+function addAdventure(){const input=document.getElementById('adventure-input');const val=input.value.trim();if(!val)return;const md=getMD();if(!md.adventures)md.adventures=[];md.adventures.push({name:val,done:false});saveAll();input.value='';renderAdventures();}
+function toggleAdv(i){const md=getMD();md.adventures[i].done=!md.adventures[i].done;saveAll();renderAdventures();}
+function delAdv(i){const md=getMD();md.adventures.splice(i,1);saveAll();renderAdventures();}
+
+function saveMonthData(){
+  const md=getMD();
+  md.skill=document.getElementById('skill-input').value;
+  md.notes=document.getElementById('notes-input').value;
+  saveAll();
+  const ind=document.getElementById('save-indicator');
+  ind.textContent='Saved';ind.className='save-ind saved';
+  setTimeout(()=>{ind.textContent='Autosaved';},1500);
+}
+
+document.getElementById('adventure-input').addEventListener('keydown',e=>{if(e.key==='Enter')addAdventure();});
+
+// ── MODAL ──
+function openAddYearModal(){document.getElementById('new-year-input').value=new Date().getFullYear();document.getElementById('modal-overlay').classList.add('open');setTimeout(()=>document.getElementById('new-year-input').focus(),50);}
+function closeModal(){document.getElementById('modal-overlay').classList.remove('open');}
+function confirmAddYear(){
+  const yr=parseInt(document.getElementById('new-year-input').value);
+  if(!yr||yr<2000||yr>2100)return;
+  if(!allData.atlas[yr])allData.atlas[yr]={goal:'',completed:false,months:{}};
+  saveAll();closeModal();openYear(yr);
+}
+document.getElementById('new-year-input').addEventListener('keydown',e=>{if(e.key==='Enter')confirmAddYear();if(e.key==='Escape')closeModal();});
+document.getElementById('modal-overlay').addEventListener('click',e=>{if(e.target===document.getElementById('modal-overlay'))closeModal();});
+
+// Seed if empty
+if(!Object.keys(allData.atlas).length){const yr=new Date().getFullYear();allData.atlas[yr]={goal:'',completed:false,months:{}};saveAll();}
+
+showYearView();
+</script>
+</body>
+</html>
