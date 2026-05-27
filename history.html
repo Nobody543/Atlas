@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>History — Life Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --ink: #1a1814; --ink-light: #3d3830; --muted: #7a7165; --faint: #c8bfb0;
+    --paper: #f5f0e8; --paper-warm: #ede6d6; --paper-dark: #ddd3c0; --cream: #faf7f2;
+    --moss: #3d5a3e; --moss-light: #5a7a5b; --moss-pale: #c8d9c8;
+    --rust: #8b3a2a; --rust-light: #b85a40; --rust-pale: #e8c8bc;
+    --amber: #7a5a1a; --amber-pale: #e8d8a8; --sky: #2a4a6a; --sky-pale: #c0d0e0;
+    --font-display: 'Playfair Display', Georgia, serif;
+    --font-body: 'DM Sans', system-ui, sans-serif;
+    --transition: 0.25s cubic-bezier(0.4,0,0.2,1);
+    --pad: clamp(1rem, 4vw, 2.5rem);
+    --safe-top: env(safe-area-inset-top,0px);
+    --safe-bottom: env(safe-area-inset-bottom,0px);
+  }
+  html { scroll-behavior: smooth; }
+  body { background: var(--cream); color: var(--ink); font-family: var(--font-body); font-weight: 300; min-height: 100vh; }
+
+  .site-nav {
+    background: var(--ink); color: var(--paper);
+    padding: calc(0.9rem + var(--safe-top)) var(--pad) 0.9rem;
+    display: flex; align-items: center; gap: 0.8rem;
+    position: sticky; top: 0; z-index: 100;
+    overflow-x: auto; scrollbar-width: none;
+  }
+  .site-nav::-webkit-scrollbar { display: none; }
+  .nav-brand { font-family: var(--font-display); font-size: 1.1rem; font-weight: 400; letter-spacing: 0.04em; white-space: nowrap; margin-right: 0.5rem; }
+  .nav-sep { color: rgba(255,255,255,0.15); font-size: 1.2rem; flex-shrink: 0; }
+  .nav-link {
+    background: none; border: none; color: rgba(255,255,255,0.5);
+    font-family: var(--font-body); font-size: 0.72rem; letter-spacing: 0.1em;
+    text-transform: uppercase; padding: 0.4rem 0.7rem; border-radius: 2rem;
+    cursor: pointer; transition: var(--transition); white-space: nowrap;
+    text-decoration: none; font-weight: 400; flex-shrink: 0;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .nav-link:hover, .nav-link.active { color: var(--paper); background: rgba(255,255,255,0.15); }
+
+  .page-wrap { padding: 2.5rem var(--pad); padding-bottom: calc(2.5rem + var(--safe-bottom)); max-width: 860px; }
+  .page-title { font-family: var(--font-display); font-size: clamp(2rem,6vw,3rem); font-weight: 400; line-height: 1.1; margin-bottom: 0.3rem; }
+  .page-title em { font-style: italic; color: var(--muted); }
+  .page-sub { font-size: 0.75rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin-bottom: 2.5rem; font-weight: 400; }
+
+  /* PERIOD SELECTOR */
+  .period-row { display: flex; gap: 0.5rem; margin-bottom: 2rem; flex-wrap: wrap; }
+  .period-btn {
+    background: none; border: 1px solid var(--paper-dark); color: var(--muted);
+    font-family: var(--font-body); font-size: 0.72rem; letter-spacing: 0.09em;
+    text-transform: uppercase; padding: 0.45rem 1rem; border-radius: 2rem;
+    cursor: pointer; transition: var(--transition); font-weight: 400;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .period-btn.active { background: var(--ink); border-color: var(--ink); color: var(--paper); }
+
+  /* STAT GRID */
+  .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 1.5rem; }
+  @media (max-width: 600px) { .stat-grid { grid-template-columns: repeat(2, 1fr); } }
+
+  .stat-tile {
+    background: var(--ink); color: var(--paper);
+    border-radius: 6px; padding: 1.4rem 1.2rem;
+    position: relative; overflow: hidden;
+  }
+  .stat-tile::after {
+    content: ''; position: absolute; bottom: -1rem; right: -1rem;
+    width: 60px; height: 60px; border-radius: 50%;
+    background: rgba(255,255,255,0.04);
+  }
+  .stat-value { font-family: var(--font-display); font-size: 2.2rem; font-weight: 400; line-height: 1; margin-bottom: 0.3rem; }
+  .stat-label { font-size: 0.65rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--faint); font-weight: 400; }
+
+  .stat-tile.moss-tile { background: var(--moss); }
+  .stat-tile.rust-tile { background: var(--rust-light); }
+  .stat-tile.amber-tile { background: var(--amber); }
+
+  /* CARD */
+  .card { background: var(--paper); border: 1px solid var(--paper-dark); border-radius: 6px; margin-bottom: 1.2rem; overflow: hidden; }
+  .card-header { padding: 1rem 1.4rem; border-bottom: 1px solid var(--paper-dark); display: flex; align-items: center; justify-content: space-between; }
+  .card-title { font-size: 0.68rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--muted); font-weight: 500; }
+  .card-accent { width: 20px; height: 3px; border-radius: 2px; }
+  .card-accent.moss { background: var(--moss-light); }
+  .card-accent.rust { background: var(--rust-light); }
+  .card-accent.amber { background: var(--amber); }
+  .card-accent.sky { background: var(--sky); }
+  .card-body { padding: 1.2rem 1.4rem; }
+
+  /* TASK STAT ROW */
+  .task-stat-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0.75rem 0; border-bottom: 1px solid var(--paper-dark);
+  }
+  .task-stat-row:last-child { border-bottom: none; }
+  .task-stat-name { font-size: 0.88rem; color: var(--ink-light); }
+  .task-stat-bar-wrap { flex: 1; margin: 0 1rem; height: 4px; background: var(--paper-dark); border-radius: 2px; overflow: hidden; }
+  .task-stat-bar { height: 100%; border-radius: 2px; background: var(--moss-light); transition: width 0.5s; }
+  .task-stat-rate { font-size: 0.78rem; color: var(--muted); white-space: nowrap; min-width: 5rem; text-align: right; }
+
+  /* HISTORY */
+  .history-item {
+    padding: 0.9rem 0; border-bottom: 1px solid var(--paper-dark);
+    display: flex; align-items: center; gap: 1rem;
+  }
+  .history-item:last-child { border-bottom: none; }
+  .history-date-col { flex-shrink: 0; }
+  .history-day { font-family: var(--font-display); font-size: 1.5rem; font-weight: 400; color: var(--ink-light); line-height: 1; }
+  .history-month { font-size: 0.65rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+  .history-divider { width: 1px; height: 36px; background: var(--paper-dark); flex-shrink: 0; }
+  .history-text { flex: 1; font-size: 0.85rem; color: var(--ink-light); }
+  .history-pct { font-size: 0.75rem; font-weight: 500; padding: 0.2rem 0.6rem; border-radius: 2rem; }
+  .pct-high { background: var(--moss-pale); color: var(--moss); }
+  .pct-mid { background: var(--amber-pale); color: var(--amber); }
+  .pct-low { background: var(--rust-pale); color: var(--rust); }
+
+  /* ATLAS SECTION */
+  .atlas-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  @media (max-width: 580px) { .atlas-grid { grid-template-columns: 1fr; } }
+  .atlas-year-block {
+    background: var(--cream); border: 1px solid var(--paper-dark); border-radius: 4px; padding: 1rem;
+  }
+  .atlas-year-label { font-family: var(--font-display); font-size: 1.4rem; font-weight: 400; color: var(--ink-light); margin-bottom: 0.3rem; }
+  .atlas-goal-text { font-size: 0.82rem; color: var(--muted); font-style: italic; font-family: var(--font-display); margin-bottom: 0.7rem; line-height: 1.4; }
+  .atlas-mini-stats { display: flex; gap: 0.8rem; font-size: 0.68rem; letter-spacing: 0.07em; text-transform: uppercase; color: var(--faint); }
+  .atlas-mini-dot { width: 6px; height: 6px; border-radius: 50%; display: inline-block; margin-right: 0.2rem; }
+  .atlas-mini-dot.moss { background: var(--moss-light); }
+  .atlas-mini-dot.rust { background: var(--rust-light); }
+  .prog-bar-wrap { margin-top: 0.7rem; }
+  .prog-bar-label { font-size: 0.62rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--faint); display: flex; justify-content: space-between; margin-bottom: 0.3rem; }
+  .prog-bar { height: 3px; background: var(--paper-dark); border-radius: 2px; overflow: hidden; }
+  .prog-fill { height: 100%; background: linear-gradient(90deg, var(--moss-light), #8ab88a); border-radius: 2px; }
+
+  .empty { padding: 2rem; text-align: center; color: var(--faint); font-size: 0.85rem; font-style: italic; font-family: var(--font-display); }
+</style>
+</head>
+<body>
+
+<nav class="site-nav">
+  <span class="nav-brand">The Atlas</span>
+  <span class="nav-sep">|</span>
+  <a class="nav-link" href="index.html">Today</a>
+  <a class="nav-link" href="atlas.html">Atlas</a>
+  <a class="nav-link active" href="history.html">History</a>
+  <a class="nav-link" href="notes.html">Notes</a>
+  <a class="nav-link" href="values.html">Values</a>
+  <a class="nav-link" href="selfhelp.html">Self Help</a>
+</nav>
+
+<div class="page-wrap">
+  <h1 class="page-title">Your <em>history.</em></h1>
+  <p class="page-sub">Everything you have done</p>
+
+  <div class="period-row">
+    <button class="period-btn active" onclick="setPeriod('week', this)">Week</button>
+    <button class="period-btn" onclick="setPeriod('month', this)">Month</button>
+    <button class="period-btn" onclick="setPeriod('year', this)">Year</button>
+    <button class="period-btn" onclick="setPeriod('all', this)">All time</button>
+  </div>
+
+  <!-- DAILY STATS -->
+  <div class="stat-grid" id="statGrid"></div>
+
+  <!-- TASK BREAKDOWN -->
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">Completion by task</span>
+      <div class="card-accent moss"></div>
+    </div>
+    <div class="card-body" id="taskBreakdown"></div>
+  </div>
+
+  <!-- ATLAS OVERVIEW -->
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">Atlas — projects overview</span>
+      <div class="card-accent rust"></div>
+    </div>
+    <div class="card-body">
+      <div class="atlas-grid" id="atlasOverview"></div>
+    </div>
+  </div>
+
+  <!-- HISTORY -->
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">Daily history</span>
+      <div class="card-accent amber"></div>
+    </div>
+    <div class="card-body" id="historyList"></div>
+  </div>
+</div>
+
+<script>
+const KEY = 'lt_data';
+const defaultValues = [];
+function loadData() {
+  try {
+    const d = JSON.parse(localStorage.getItem(KEY)) || {};
+    if (!d.goals) d.goals = {};
+    if (!d.regularTasks) d.regularTasks = [];
+    if (!d.atlas) d.atlas = {};
+    return d;
+  } catch { return { goals:{}, regularTasks:[], atlas:{} }; }
+}
+let data = loadData();
+
+function getToday() { return new Date().toISOString().split('T')[0]; }
+function formatDate(ds) { return new Date(ds + 'T12:00:00').toLocaleDateString('en-GB', { weekday:'long', year:'numeric', month:'long', day:'numeric' }); }
+
+function getCutoff(period) {
+  const d = new Date();
+  if (period === 'week') d.setDate(d.getDate() - 7);
+  else if (period === 'month') d.setMonth(d.getMonth() - 1);
+  else if (period === 'year') d.setFullYear(d.getFullYear() - 1);
+  else d.setFullYear(2000);
+  return d;
+}
+
+function calculateStreak() {
+  let streak = 0;
+  const d = new Date();
+  while (true) {
+    const ds = d.toISOString().split('T')[0];
+    const goals = data.goals[ds];
+    if (!goals || !goals.length || !goals.some(g => g.status === 'completed')) break;
+    streak++;
+    d.setDate(d.getDate() - 1);
+  }
+  return streak;
+}
+
+function setPeriod(period, btn) {
+  document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderStats(period);
+}
+
+function renderStats(period) {
+  const cutoff = getCutoff(period);
+  let total = 0, done = 0;
+  const taskStats = {};
+  data.regularTasks.forEach(t => { taskStats[t.id] = { total:0, done:0, name:t.text }; });
+
+  Object.entries(data.goals).forEach(([date, goals]) => {
+    if (new Date(date + 'T12:00:00') < cutoff) return;
+    goals.forEach(g => {
+      total++;
+      if (g.status === 'completed') done++;
+      if (g.regularTaskId && taskStats[g.regularTaskId]) {
+        taskStats[g.regularTaskId].total++;
+        if (g.status === 'completed') taskStats[g.regularTaskId].done++;
+      }
+    });
+  });
+
+  const rate = total > 0 ? Math.round(done / total * 100) : 0;
+  const streak = calculateStreak();
+
+  document.getElementById('statGrid').innerHTML = `
+    <div class="stat-tile"><div class="stat-value">${total}</div><div class="stat-label">Total Goals</div></div>
+    <div class="stat-tile moss-tile"><div class="stat-value">${done}</div><div class="stat-label">Completed</div></div>
+    <div class="stat-tile amber-tile"><div class="stat-value">${rate}%</div><div class="stat-label">Completion Rate</div></div>
+    <div class="stat-tile rust-tile"><div class="stat-value">${streak}</div><div class="stat-label">Day Streak</div></div>
+  `;
+
+  // Task breakdown
+  let dailyTotal = 0, dailyDone = 0;
+  Object.values(data.goals).forEach(gs => gs.forEach(g => { if (!g.regularTaskId) { dailyTotal++; if (g.status === 'completed') dailyDone++; } }));
+  const dailyRate = dailyTotal > 0 ? Math.round(dailyDone / dailyTotal * 100) : 0;
+
+  let html = `<div class="task-stat-row">
+    <span class="task-stat-name" style="font-weight:500;">All goals</span>
+    <div class="task-stat-bar-wrap"><div class="task-stat-bar" style="width:${rate}%"></div></div>
+    <span class="task-stat-rate">${rate}% (${done}/${total})</span>
+  </div>
+  <div class="task-stat-row">
+    <span class="task-stat-name">Daily goals</span>
+    <div class="task-stat-bar-wrap"><div class="task-stat-bar" style="width:${dailyRate}%; background: var(--amber);"></div></div>
+    <span class="task-stat-rate">${dailyRate}% (${dailyDone}/${dailyTotal})</span>
+  </div>`;
+
+  Object.values(taskStats).forEach(s => {
+    if (!s.total) return;
+    const r = Math.round(s.done / s.total * 100);
+    html += `<div class="task-stat-row">
+      <span class="task-stat-name">${s.name}</span>
+      <div class="task-stat-bar-wrap"><div class="task-stat-bar" style="width:${r}%; background:var(--rust-light);"></div></div>
+      <span class="task-stat-rate">${r}% (${s.done}/${s.total})</span>
+    </div>`;
+  });
+  document.getElementById('taskBreakdown').innerHTML = html || '<div class="empty">No task data yet.</div>';
+
+  renderAtlasOverview();
+  renderHistory(period);
+}
+
+function renderAtlasOverview() {
+  const el = document.getElementById('atlasOverview');
+  const years = Object.keys(data.atlas).map(Number).sort((a,b) => b-a);
+  if (!years.length) { el.innerHTML = '<div class="empty" style="grid-column:1/-1;">No atlas data yet — visit the Atlas page to add years.</div>'; return; }
+
+  el.innerHTML = years.map(yr => {
+    const yd = data.atlas[yr] || {};
+    const months = yd.months || {};
+    const skillsDone = Object.values(months).filter(m => m.skillDone).length;
+    const skillsSet = Object.values(months).filter(m => m.skill).length;
+    const adventures = Object.values(months).reduce((acc,m) => acc + (m.adventures||[]).length, 0);
+    const pct = Math.round(skillsDone / 12 * 100);
+    return `<div class="atlas-year-block">
+      <div class="atlas-year-label">${yr}</div>
+      <div class="atlas-goal-text">${yd.goal ? '"' + (yd.goal.length > 60 ? yd.goal.slice(0,60)+'…' : yd.goal) + '"' : 'No goal set'}</div>
+      <div class="atlas-mini-stats">
+        <span><span class="atlas-mini-dot moss"></span>${skillsSet} skills set</span>
+        <span><span class="atlas-mini-dot rust"></span>${adventures} adventures</span>
+      </div>
+      <div class="prog-bar-wrap">
+        <div class="prog-bar-label"><span>Skills learned</span><span>${pct}%</span></div>
+        <div class="prog-bar"><div class="prog-fill" style="width:${pct}%"></div></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderHistory(period) {
+  const cutoff = getCutoff(period);
+  const el = document.getElementById('historyList');
+  const dates = Object.entries(data.goals)
+    .filter(([d]) => new Date(d + 'T12:00:00') >= cutoff)
+    .sort((a,b) => b[0].localeCompare(a[0]));
+  if (!dates.length) { el.innerHTML = '<div class="empty">No history for this period yet.</div>'; return; }
+
+  el.innerHTML = dates.map(([date, goals]) => {
+    const done = goals.filter(g => g.status === 'completed').length;
+    const total = goals.length;
+    const rate = total > 0 ? Math.round(done / total * 100) : 0;
+    const pctClass = rate >= 70 ? 'pct-high' : rate >= 40 ? 'pct-mid' : 'pct-low';
+    const d = new Date(date + 'T12:00:00');
+    const day = d.getDate();
+    const month = d.toLocaleDateString('en-GB', { month:'short' });
+    return `<div class="history-item">
+      <div class="history-date-col">
+        <div class="history-day">${day}</div>
+        <div class="history-month">${month}</div>
+      </div>
+      <div class="history-divider"></div>
+      <div class="history-text">${done} of ${total} goals completed</div>
+      <span class="history-pct ${pctClass}">${rate}%</span>
+    </div>`;
+  }).join('');
+}
+
+renderStats('week');
+</script>
+</body>
+</html>
