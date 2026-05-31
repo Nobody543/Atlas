@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Self Help — Life Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --ink: #1a1814; --ink-light: #3d3830; --muted: #7a7165; --faint: #c8bfb0;
+    --paper: #f5f0e8; --paper-warm: #ede6d6; --paper-dark: #ddd3c0; --cream: #faf7f2;
+    --moss: #3d5a3e; --moss-light: #5a7a5b; --moss-pale: #c8d9c8;
+    --rust: #8b3a2a; --rust-light: #b85a40; --rust-pale: #e8c8bc;
+    --amber: #7a5a1a; --amber-pale: #e8d8a8;
+    --font-display: 'Playfair Display', Georgia, serif;
+    --font-body: 'DM Sans', system-ui, sans-serif;
+    --transition: 0.25s cubic-bezier(0.4,0,0.2,1);
+    --pad: clamp(1rem, 4vw, 2.5rem);
+    --safe-top: env(safe-area-inset-top,0px);
+    --safe-bottom: env(safe-area-inset-bottom,0px);
+  }
+  html { scroll-behavior: smooth; }
+  body { background: var(--cream); color: var(--ink); font-family: var(--font-body); font-weight: 300; min-height: 100vh; }
+
+  .site-nav {
+    background: var(--ink); color: var(--paper);
+    padding: calc(0.9rem + var(--safe-top)) var(--pad) 0.9rem;
+    display: flex; align-items: center; gap: 0.8rem;
+    position: sticky; top: 0; z-index: 100;
+    overflow-x: auto; scrollbar-width: none;
+  }
+  .site-nav::-webkit-scrollbar { display: none; }
+  .nav-brand { font-family: var(--font-display); font-size: 1.1rem; font-weight: 400; white-space: nowrap; margin-right: 0.5rem; }
+  .nav-sep { color: rgba(255,255,255,0.15); font-size: 1.2rem; flex-shrink: 0; }
+  .nav-link {
+    background: none; border: none; color: rgba(255,255,255,0.5);
+    font-family: var(--font-body); font-size: 0.72rem; letter-spacing: 0.1em;
+    text-transform: uppercase; padding: 0.4rem 0.7rem; border-radius: 2rem;
+    cursor: pointer; transition: var(--transition); white-space: nowrap;
+    text-decoration: none; font-weight: 400; flex-shrink: 0;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .nav-link:hover, .nav-link.active { color: var(--paper); background: rgba(255,255,255,0.15); }
+
+  .page-wrap { padding: 2.5rem var(--pad); padding-bottom: calc(2.5rem + var(--safe-bottom)); max-width: 720px; }
+  .page-title { font-family: var(--font-display); font-size: clamp(2rem,6vw,3rem); font-weight: 400; margin-bottom: 0.3rem; }
+  .page-title em { font-style: italic; color: var(--muted); }
+  .page-sub { font-size: 0.75rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin-bottom: 2.5rem; font-weight: 400; }
+
+  /* XP HERO */
+  .xp-hero {
+    background: var(--ink); border-radius: 6px; padding: 1.8rem var(--pad);
+    margin-bottom: 1.2rem; display: grid; grid-template-columns: 1fr 1fr;
+    gap: 1.5rem; position: relative; overflow: hidden;
+  }
+  @media (max-width: 480px) { .xp-hero { grid-template-columns: 1fr; } }
+  .xp-hero::after {
+    content: 'XP'; position: absolute; right: -0.5rem; bottom: -1.5rem;
+    font-family: var(--font-display); font-size: 8rem; font-weight: 600;
+    color: rgba(255,255,255,0.04); line-height: 1; pointer-events: none;
+  }
+  .xp-label { font-size: 0.65rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--faint); margin-bottom: 0.4rem; font-weight: 400; }
+  .xp-value { font-family: var(--font-display); font-size: 2.8rem; font-weight: 400; color: var(--paper); line-height: 1; }
+  .xp-sub { font-size: 0.78rem; color: var(--faint); margin-top: 0.3rem; }
+  .milestone-block { position: relative; z-index: 1; }
+  .milestone-label { font-size: 0.65rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--faint); margin-bottom: 0.5rem; font-weight: 400; }
+  .milestone-text { font-family: var(--font-display); font-size: 1rem; color: var(--paper); font-style: italic; line-height: 1.4; }
+  .milestone-hint { font-size: 0.72rem; color: var(--faint); margin-top: 0.4rem; }
+
+  /* REWARD BANNER */
+  .reward-banner {
+    background: linear-gradient(135deg, var(--moss) 0%, var(--moss-light) 100%);
+    border-radius: 6px; padding: 1.4rem 1.6rem; margin-bottom: 1.2rem;
+    display: none; color: white;
+  }
+  .reward-banner.show { display: block; }
+  .reward-banner-title { font-family: var(--font-display); font-size: 1.2rem; font-weight: 400; margin-bottom: 0.4rem; }
+  .reward-banner-body { font-size: 0.88rem; opacity: 0.9; margin-bottom: 1rem; line-height: 1.5; }
+  .reward-claim-btn {
+    background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3);
+    color: white; font-family: var(--font-body); font-size: 0.78rem; letter-spacing: 0.08em;
+    text-transform: uppercase; padding: 0.55rem 1.2rem; border-radius: 2rem;
+    cursor: pointer; transition: background 0.2s; min-height: 44px;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .reward-claim-btn:hover { background: rgba(255,255,255,0.3); }
+
+  /* CARD */
+  .card { background: var(--paper); border: 1px solid var(--paper-dark); border-radius: 6px; margin-bottom: 1.2rem; overflow: hidden; }
+  .card-header { padding: 1rem 1.4rem; border-bottom: 1px solid var(--paper-dark); display: flex; align-items: center; justify-content: space-between; }
+  .card-title { font-size: 0.68rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--muted); font-weight: 500; }
+  .card-accent { width: 20px; height: 3px; border-radius: 2px; }
+  .card-accent.moss { background: var(--moss-light); }
+  .card-accent.amber { background: var(--amber); }
+  .card-accent.rust { background: var(--rust-light); }
+  .card-body { padding: 1.2rem 1.4rem; }
+
+  /* ADD INPUT */
+  .add-row { display: flex; gap: 0.6rem; margin-bottom: 1.2rem; }
+  .add-input {
+    flex: 1; background: var(--cream); border: 1px solid var(--paper-dark);
+    border-radius: 4px; font-family: var(--font-body); font-size: 0.88rem;
+    color: var(--ink); padding: 0.7rem 0.9rem; outline: none;
+    transition: border-color 0.2s; min-height: 44px; -webkit-appearance: none;
+  }
+  .add-input:focus { border-color: var(--moss-light); }
+  .add-btn {
+    background: var(--ink); color: var(--paper); border: none;
+    border-radius: 4px; padding: 0.7rem 1.1rem; font-family: var(--font-body);
+    font-size: 0.8rem; cursor: pointer; transition: var(--transition);
+    min-height: 44px; white-space: nowrap; -webkit-tap-highlight-color: transparent;
+  }
+  .add-btn:hover { background: var(--moss); }
+
+  /* HABIT ITEM */
+  .habit-item {
+    display: flex; align-items: center; gap: 0.9rem;
+    padding: 0.85rem 0; border-bottom: 1px solid var(--paper-dark);
+    transition: var(--transition);
+  }
+  .habit-item:last-child { border-bottom: none; padding-bottom: 0; }
+  .habit-item:first-child { padding-top: 0; }
+  .habit-check {
+    width: 26px; height: 26px; border-radius: 50%;
+    border: 2px solid var(--paper-dark); background: var(--cream);
+    cursor: pointer; flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+    font-size: 0.8rem; transition: var(--transition); color: transparent;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .habit-check.done { background: var(--moss-light); border-color: var(--moss); color: white; }
+  .habit-text-block { flex: 1; }
+  .habit-text { font-size: 0.9rem; color: var(--ink-light); }
+  .habit-streak { font-size: 0.72rem; color: var(--amber); margin-top: 0.2rem; }
+  .del-btn {
+    background: none; border: none; color: var(--faint); font-size: 0.8rem;
+    cursor: pointer; padding: 0.2rem; transition: color 0.2s;
+    min-width: 32px; min-height: 32px; display: flex; align-items: center; justify-content: center;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .del-btn:hover { color: var(--rust); }
+
+  /* GOOD DEED */
+  .deed-item {
+    padding: 0.9rem 0; border-bottom: 1px solid var(--paper-dark);
+    display: flex; align-items: flex-start; gap: 0.8rem;
+  }
+  .deed-item:last-child { border-bottom: none; }
+  .deed-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--amber); flex-shrink: 0; margin-top: 0.35rem; }
+  .deed-body { flex: 1; }
+  .deed-text { font-size: 0.88rem; color: var(--ink-light); line-height: 1.4; font-style: italic; font-family: var(--font-display); }
+  .deed-date { font-size: 0.68rem; color: var(--faint); margin-top: 0.2rem; letter-spacing: 0.04em; }
+
+  .empty { padding: 1.5rem 0; text-align: center; color: var(--faint); font-size: 0.85rem; font-style: italic; font-family: var(--font-display); }
+</style>
+</head>
+<body>
+
+<nav class="site-nav">
+  <span class="nav-brand">The Atlas</span>
+  <span class="nav-sep">|</span>
+  <a class="nav-link" href="today.html">Today</a>
+  <a class="nav-link" href="atlas.html">Atlas</a>
+  <a class="nav-link" href="history.html">History</a>
+  <a class="nav-link" href="notes.html">Notes</a>
+  <a class="nav-link" href="values.html">Values</a>
+  <a class="nav-link active" href="selfhelp.html">Self Help</a>
+</nav>
+
+<div class="page-wrap">
+  <h1 class="page-title">Self <em>help.</em></h1>
+  <p class="page-sub">Habits, rewards, good deeds</p>
+
+  <!-- XP Hero -->
+  <div class="xp-hero">
+    <div style="position:relative;z-index:1;">
+      <div class="xp-label">Total experience</div>
+      <div class="xp-value" id="xpValue">0</div>
+      <div class="xp-sub">XP earned</div>
+    </div>
+    <div class="milestone-block">
+      <div class="milestone-label">Next milestone</div>
+      <div class="milestone-text" id="milestoneText">—</div>
+      <div class="milestone-hint">Keep your habits daily for a surprise reward 🎁</div>
+    </div>
+  </div>
+
+  <!-- Reward banner -->
+  <div class="reward-banner" id="rewardBanner">
+    <div class="reward-banner-title">🎉 Reward Unlocked!</div>
+    <div class="reward-banner-body" id="rewardBody"></div>
+    <button class="reward-claim-btn" onclick="claimReward()">Claim reward</button>
+  </div>
+
+  <!-- HABITS -->
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">Your habits</span>
+      <div class="card-accent moss"></div>
+    </div>
+    <div class="card-body">
+      <div class="add-row">
+        <input class="add-input" id="habitInput" placeholder="E.g. Exercise for 30 mins" />
+        <button class="add-btn" onclick="addHabit()">Add</button>
+      </div>
+      <div id="habitsList"></div>
+    </div>
+  </div>
+
+  <!-- GOOD DEEDS -->
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">Good deeds unlocked</span>
+      <div class="card-accent amber"></div>
+    </div>
+    <div class="card-body" id="deedsList"></div>
+  </div>
+</div>
+
+<script>
+const KEY = 'lt_data';
+const defaultValues = [
+  {name:"Kindness"},{name:"Fairness"},{name:"Honesty"},{name:"Integrity"},{name:"Discipline"},
+  {name:"Ambition"},{name:"Curiosity"},{name:"Creativity"},{name:"Courage"},{name:"Compassion"}
+];
+function loadData() {
+  try {
+    const d = JSON.parse(localStorage.getItem(KEY)) || {};
+    if (!d.habits) d.habits = [];
+    if (!d.values || !d.values.length) d.values = [...defaultValues];
+    if (!d.selfHelp) d.selfHelp = { xp:0, nextRewardDate:null, habitCompletions:{}, goodDeeds:[] };
+    if (!d.selfHelp.habitCompletions) d.selfHelp.habitCompletions = {};
+    if (!d.selfHelp.goodDeeds) d.selfHelp.goodDeeds = [];
+    return d;
+  } catch { return { habits:[], values:[...defaultValues], selfHelp:{xp:0,nextRewardDate:null,habitCompletions:{},goodDeeds:[]} }; }
+}
+function saveData() { localStorage.setItem(KEY, JSON.stringify(data)); }
+let data = loadData();
+
+function getToday() { return new Date().toISOString().split('T')[0]; }
+function formatDate(ds) { return new Date(ds + 'T12:00:00').toLocaleDateString('en-GB', { day:'numeric', month:'long', year:'numeric' }); }
+
+// ── HABITS ──
+function addHabit() {
+  const input = document.getElementById('habitInput');
+  const text = input.value.trim();
+  if (!text) return;
+  data.habits.push({ id: Date.now(), text, createdAt: new Date().toISOString() });
+  input.value = '';
+  if (!data.selfHelp.nextRewardDate) setNextReward();
+  saveData(); renderHabits();
+}
+
+function deleteHabit(id) {
+  data.habits = data.habits.filter(h => h.id !== id);
+  saveData(); renderHabits();
+}
+
+function toggleHabit(id) {
+  const today = getToday();
+  if (!data.selfHelp.habitCompletions[today]) data.selfHelp.habitCompletions[today] = [];
+  const idx = data.selfHelp.habitCompletions[today].indexOf(id);
+  if (idx >= 0) data.selfHelp.habitCompletions[today].splice(idx, 1);
+  else data.selfHelp.habitCompletions[today].push(id);
+  saveData(); renderHabits(); checkRewards();
+}
+
+function habitStreak(id) {
+  let streak = 0;
+  const d = new Date();
+  for (let i = 0; i < 365; i++) {
+    const ds = new Date(d); ds.setDate(ds.getDate() - i);
+    const key = ds.toISOString().split('T')[0];
+    if (data.selfHelp.habitCompletions[key]?.includes(id)) streak++;
+    else break;
+  }
+  return streak;
+}
+
+function renderHabits() {
+  const el = document.getElementById('habitsList');
+  const today = getToday();
+  if (!data.habits.length) { el.innerHTML = '<div class="empty">No habits yet — add one above to begin.</div>'; return; }
+  el.innerHTML = data.habits.map(h => {
+    const done = data.selfHelp.habitCompletions[today]?.includes(h.id) || false;
+    const streak = habitStreak(h.id);
+    return `<div class="habit-item">
+      <div class="habit-check${done ? ' done' : ''}" onclick="toggleHabit(${h.id})">${done ? '✓' : ''}</div>
+      <div class="habit-text-block">
+        <div class="habit-text">${h.text}</div>
+        ${streak > 0 ? `<div class="habit-streak">🔥 ${streak} day${streak !== 1 ? 's' : ''} streak</div>` : ''}
+      </div>
+      <button class="del-btn" onclick="deleteHabit(${h.id})">✕</button>
+    </div>`;
+  }).join('');
+}
+
+// ── REWARDS ──
+function setNextReward() {
+  const days = Math.floor(Math.random() * 7) + 1;
+  const d = new Date();
+  d.setDate(d.getDate() + days);
+  d.setHours(Math.floor(Math.random()*14)+8, Math.floor(Math.random()*60), 0, 0);
+  data.selfHelp.nextRewardDate = d.toISOString();
+  saveData();
+}
+
+function checkRewards() {
+  if (!data.selfHelp.nextRewardDate) { setNextReward(); updateDisplay(); return; }
+  const now = new Date();
+  const rewardDT = new Date(data.selfHelp.nextRewardDate);
+  if (now >= rewardDT) {
+    const mStart = new Date(rewardDT); mStart.setHours(0,0,0,0);
+    let completedDays = 0;
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(mStart); d.setDate(d.getDate() - i - 1);
+      const ds = d.toISOString().split('T')[0];
+      if (data.selfHelp.habitCompletions[ds]?.length) completedDays++;
+    }
+    if (completedDays >= 3) triggerReward();
+    else { setNextReward(); updateDisplay(); }
+  } else { updateDisplay(); }
+}
+
+function triggerReward() {
+  const deed = generateGoodDeed();
+  const xp = Math.floor(Math.random() * 50) + 50;
+  data.selfHelp.pendingReward = { deed, xp };
+  saveData();
+  const banner = document.getElementById('rewardBanner');
+  document.getElementById('rewardBody').innerHTML = `<strong>+${xp} XP!</strong><br>Good deed: <em>${deed}</em>`;
+  banner.classList.add('show');
+  updateDisplay();
+}
+
+function claimReward() {
+  if (!data.selfHelp.pendingReward) return;
+  data.selfHelp.xp = (data.selfHelp.xp || 0) + data.selfHelp.pendingReward.xp;
+  data.selfHelp.goodDeeds.push({ text: data.selfHelp.pendingReward.deed, date: new Date().toISOString() });
+  delete data.selfHelp.pendingReward;
+  setNextReward(); saveData();
+  document.getElementById('rewardBanner').classList.remove('show');
+  updateDisplay(); renderDeeds();
+}
+
+function generateGoodDeed() {
+  const topValues = (data.values || []).slice(0, 5);
+  const v = topValues[Math.floor(Math.random() * topValues.length)];
+  const deeds = {
+    Kindness: ['Pay for a stranger\'s coffee','Leave a kind note for someone','Compliment three people genuinely','Help someone carry their groceries','Send a thank you message to someone who helped you'],
+    Service: ['Volunteer for 2 hours at a local charity','Help a neighbour with a task','Mentor someone in your field','Donate items you no longer need','Spend time listening to someone who needs it'],
+    Generosity: ['Donate to a cause you care about','Share your skills by teaching someone','Give away something valuable to someone who needs it','Treat a friend to lunch','Leave a generous tip'],
+    Community: ['Organise a neighbourhood gathering','Join a local community group','Introduce two people who should know each other','Participate in a community cleanup','Support a local business'],
+    Gratitude: ['Write a detailed thank you letter','Call someone to express appreciation','Share why you\'re grateful for someone publicly','Create a gratitude jar for your family','Thank someone who doesn\'t expect it'],
+  };
+  const list = (v && deeds[v.name]) || ['Do something kind for a stranger','Help someone in need','Express gratitude to someone','Volunteer your time','Share something valuable with others'];
+  return list[Math.floor(Math.random() * list.length)];
+}
+
+function updateDisplay() {
+  document.getElementById('xpValue').textContent = (data.selfHelp.xp || 0).toLocaleString();
+  const el = document.getElementById('milestoneText');
+  if (data.selfHelp.nextRewardDate) {
+    const diff = Math.ceil((new Date(data.selfHelp.nextRewardDate) - new Date()) / 86400000);
+    el.textContent = diff > 0 ? `${diff} day${diff !== 1 ? 's' : ''} away` : 'Arriving soon…';
+  } else { el.textContent = '—'; }
+  if (data.selfHelp.pendingReward) {
+    const banner = document.getElementById('rewardBanner');
+    document.getElementById('rewardBody').innerHTML = `<strong>+${data.selfHelp.pendingReward.xp} XP!</strong><br>Good deed: <em>${data.selfHelp.pendingReward.deed}</em>`;
+    banner.classList.add('show');
+  }
+}
+
+function renderDeeds() {
+  const el = document.getElementById('deedsList');
+  const deeds = (data.selfHelp.goodDeeds || []).slice().reverse();
+  if (!deeds.length) { el.innerHTML = '<div class="empty">Complete your habits to unlock good deeds.</div>'; return; }
+  el.innerHTML = deeds.map(d => `<div class="deed-item">
+    <div class="deed-dot"></div>
+    <div class="deed-body">
+      <div class="deed-text">${d.text}</div>
+      <div class="deed-date">${formatDate(d.date.split('T')[0])}</div>
+    </div>
+  </div>`).join('');
+}
+
+document.getElementById('habitInput').addEventListener('keypress', e => { if (e.key === 'Enter') addHabit(); });
+
+renderHabits(); updateDisplay(); renderDeeds(); checkRewards();
+</script>
+</body>
+</html>
