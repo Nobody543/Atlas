@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Notes — Life Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --ink: #1a1814; --ink-light: #3d3830; --muted: #7a7165; --faint: #c8bfb0;
+    --paper: #f5f0e8; --paper-warm: #ede6d6; --paper-dark: #ddd3c0; --cream: #faf7f2;
+    --moss: #3d5a3e; --moss-light: #5a7a5b; --moss-pale: #c8d9c8;
+    --rust: #8b3a2a; --rust-light: #b85a40; --rust-pale: #e8c8bc;
+    --amber: #7a5a1a; --amber-pale: #e8d8a8; --sky: #2a4a6a;
+    --font-display: 'Playfair Display', Georgia, serif;
+    --font-body: 'DM Sans', system-ui, sans-serif;
+    --transition: 0.25s cubic-bezier(0.4,0,0.2,1);
+    --pad: clamp(1rem, 4vw, 2.5rem);
+    --safe-top: env(safe-area-inset-top,0px);
+    --safe-bottom: env(safe-area-inset-bottom,0px);
+  }
+  html { scroll-behavior: smooth; }
+  body { background: var(--cream); color: var(--ink); font-family: var(--font-body); font-weight: 300; min-height: 100vh; }
+
+  .site-nav {
+    background: var(--ink); color: var(--paper);
+    padding: calc(0.9rem + var(--safe-top)) var(--pad) 0.9rem;
+    display: flex; align-items: center; gap: 0.8rem;
+    position: sticky; top: 0; z-index: 100;
+    overflow-x: auto; scrollbar-width: none;
+  }
+  .site-nav::-webkit-scrollbar { display: none; }
+  .nav-brand { font-family: var(--font-display); font-size: 1.1rem; font-weight: 400; white-space: nowrap; margin-right: 0.5rem; }
+  .nav-sep { color: rgba(255,255,255,0.15); font-size: 1.2rem; flex-shrink: 0; }
+  .nav-link {
+    background: none; border: none; color: rgba(255,255,255,0.5);
+    font-family: var(--font-body); font-size: 0.72rem; letter-spacing: 0.1em;
+    text-transform: uppercase; padding: 0.4rem 0.7rem; border-radius: 2rem;
+    cursor: pointer; transition: var(--transition); white-space: nowrap;
+    text-decoration: none; font-weight: 400; flex-shrink: 0;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .nav-link:hover, .nav-link.active { color: var(--paper); background: rgba(255,255,255,0.15); }
+
+  .page-wrap { padding: 2.5rem var(--pad); padding-bottom: calc(2.5rem + var(--safe-bottom)); max-width: 720px; }
+  .page-title { font-family: var(--font-display); font-size: clamp(2rem,6vw,3rem); font-weight: 400; margin-bottom: 0.3rem; }
+  .page-title em { font-style: italic; color: var(--muted); }
+  .page-sub { font-size: 0.75rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin-bottom: 2.5rem; font-weight: 400; }
+
+  /* ADD NOTE AREA */
+  .add-note-area {
+    background: var(--ink); border-radius: 6px; padding: 1.6rem;
+    margin-bottom: 2rem; position: relative; overflow: hidden;
+  }
+  .add-note-area::after {
+    content: 'note'; position: absolute; right: -0.5rem; bottom: -1rem;
+    font-family: var(--font-display); font-size: 5rem; font-weight: 600;
+    color: rgba(255,255,255,0.04); line-height: 1; pointer-events: none;
+  }
+  .add-note-label { font-size: 0.68rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--faint); margin-bottom: 0.7rem; font-weight: 400; }
+  .add-note-input {
+    width: 100%; background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 4px; font-family: var(--font-body); font-size: 0.92rem; color: var(--paper);
+    padding: 0.8rem 1rem; outline: none; transition: border-color 0.2s; resize: none;
+    min-height: 44px; -webkit-appearance: none;
+  }
+  .add-note-input::placeholder { color: rgba(200,191,176,0.4); }
+  .add-note-input:focus { border-color: rgba(255,255,255,0.4); }
+  .add-note-row { display: flex; gap: 0.6rem; margin-top: 0.7rem; align-items: center; }
+  .add-note-date { font-size: 0.72rem; color: var(--faint); flex: 1; }
+  .add-note-btn {
+    background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.2);
+    color: var(--paper); font-family: var(--font-body); font-size: 0.75rem;
+    letter-spacing: 0.08em; text-transform: uppercase; padding: 0.5rem 1.1rem;
+    border-radius: 2rem; cursor: pointer; transition: var(--transition);
+    min-height: 40px; -webkit-tap-highlight-color: transparent;
+  }
+  .add-note-btn:hover { background: rgba(255,255,255,0.2); }
+
+  /* DATE GROUP */
+  .date-group { margin-bottom: 2rem; }
+  .date-group-header {
+    font-size: 0.68rem; letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--muted); margin-bottom: 0.7rem; font-weight: 400;
+    display: flex; align-items: center; gap: 0.8rem;
+  }
+  .date-group-header::after { content: ''; flex: 1; height: 1px; background: var(--paper-dark); }
+  .date-group-name { font-family: var(--font-display); font-size: 1rem; font-weight: 400; color: var(--ink-light); font-style: italic; }
+
+  /* NOTE CARD */
+  .note-card {
+    background: var(--paper); border: 1px solid var(--paper-dark); border-radius: 4px;
+    padding: 1rem 1.2rem; margin-bottom: 0.7rem;
+    display: flex; align-items: flex-start; gap: 0.8rem;
+    transition: var(--transition);
+  }
+  .note-card:hover { border-color: var(--muted); }
+  .note-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--sky); flex-shrink: 0; margin-top: 0.4rem; }
+  .note-dot.today { background: var(--moss-light); }
+  .note-body { flex: 1; min-width: 0; }
+  .note-text { font-size: 0.9rem; color: var(--ink-light); line-height: 1.5; word-break: break-word; }
+  .note-actions { display: flex; gap: 0.3rem; flex-shrink: 0; }
+  .note-btn {
+    background: none; border: none; cursor: pointer; font-size: 0.72rem;
+    color: var(--faint); padding: 0.2rem 0.5rem; transition: color 0.2s;
+    min-width: 32px; min-height: 32px; display: flex; align-items: center; justify-content: center;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .note-btn:hover { color: var(--ink); }
+  .note-btn.edit:hover { color: var(--sky); }
+  .note-btn.del:hover { color: var(--rust); }
+
+  /* EDIT MODAL */
+  .modal-overlay {
+    position: fixed; inset: 0; background: rgba(26,24,20,0.6);
+    display: flex; align-items: flex-end; justify-content: center;
+    z-index: 200; opacity: 0; pointer-events: none; transition: opacity 0.2s;
+    padding-bottom: var(--safe-bottom);
+  }
+  @media (min-width: 500px) { .modal-overlay { align-items: center; } }
+  .modal-overlay.open { opacity: 1; pointer-events: all; }
+  .modal {
+    background: var(--cream); border-radius: 12px 12px 0 0; padding: 2rem;
+    width: 100%; max-width: 480px;
+    transform: translateY(20px); transition: transform 0.25s;
+    padding-bottom: calc(2rem + var(--safe-bottom));
+  }
+  @media (min-width: 500px) { .modal { border-radius: 8px; padding-bottom: 2rem; transform: translateY(12px); } }
+  .modal-overlay.open .modal { transform: translateY(0); }
+  .modal h3 { font-family: var(--font-display); font-size: 1.3rem; margin-bottom: 1rem; font-weight: 400; }
+  .modal textarea {
+    width: 100%; background: var(--paper); border: 1px solid var(--paper-dark);
+    border-radius: 4px; font-family: var(--font-body); font-size: 0.9rem; color: var(--ink);
+    padding: 0.8rem 1rem; outline: none; resize: none; min-height: 100px;
+    margin-bottom: 1rem; -webkit-appearance: none;
+  }
+  .modal textarea:focus { border-color: var(--sky); }
+  .modal-actions { display: flex; gap: 0.7rem; justify-content: flex-end; }
+  .btn-cancel {
+    background: transparent; border: 1px solid var(--paper-dark); color: var(--muted);
+    font-family: var(--font-body); font-size: 0.82rem; padding: 0.5rem 1.2rem;
+    border-radius: 2rem; cursor: pointer; min-height: 44px;
+  }
+  .btn-save {
+    background: var(--ink); border: none; color: var(--paper);
+    font-family: var(--font-body); font-size: 0.82rem; padding: 0.5rem 1.4rem;
+    border-radius: 2rem; cursor: pointer; min-height: 44px;
+  }
+
+  .empty { padding: 2rem; text-align: center; color: var(--faint); font-size: 0.85rem; font-style: italic; font-family: var(--font-display); }
+</style>
+</head>
+<body>
+
+<nav class="site-nav">
+  <span class="nav-brand">The Atlas</span>
+  <span class="nav-sep">|</span>
+  <a class="nav-link" href="today.html">Today</a>
+  <a class="nav-link" href="atlas.html">Atlas</a>
+  <a class="nav-link" href="history.html">History</a>
+  <a class="nav-link active" href="notes.html">Notes</a>
+  <a class="nav-link" href="values.html">Values</a>
+  <a class="nav-link" href="selfhelp.html">Self Help</a>
+</nav>
+
+<div class="page-wrap">
+  <h1 class="page-title">Your <em>notes.</em></h1>
+  <p class="page-sub">Thoughts, ideas, observations</p>
+
+  <!-- Add note -->
+  <div class="add-note-area">
+    <p class="add-note-label">New note</p>
+    <input class="add-note-input" id="noteInput" placeholder="Write something…" />
+    <div class="add-note-row">
+      <span class="add-note-date" id="todayLabel"></span>
+      <button class="add-note-btn" onclick="addNote()">Add note</button>
+    </div>
+  </div>
+
+  <!-- Notes list -->
+  <div id="notesList"></div>
+</div>
+
+<!-- Edit modal -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <h3>Edit note</h3>
+    <textarea id="editTextarea"></textarea>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+      <button class="btn-save" onclick="saveEdit()">Save</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const KEY = 'lt_data';
+function loadData() {
+  try {
+    const d = JSON.parse(localStorage.getItem(KEY)) || {};
+    if (!d.notes) d.notes = {};
+    return d;
+  } catch { return { notes: {} }; }
+}
+function saveData() { localStorage.setItem(KEY, JSON.stringify(data)); }
+let data = loadData();
+
+function getToday() { return new Date().toISOString().split('T')[0]; }
+function formatDate(ds) {
+  const d = new Date(ds + 'T12:00:00');
+  const today = getToday();
+  if (ds === today) return 'Today';
+  const yest = new Date(); yest.setDate(yest.getDate()-1);
+  if (ds === yest.toISOString().split('T')[0]) return 'Yesterday';
+  return d.toLocaleDateString('en-GB', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+}
+
+let editingDate = null, editingId = null;
+
+document.getElementById('todayLabel').textContent = new Date().toLocaleDateString('en-GB', { weekday:'long', day:'numeric', month:'long' });
+
+function addNote() {
+  const input = document.getElementById('noteInput');
+  const text = input.value.trim();
+  if (!text) return;
+  const today = getToday();
+  if (!data.notes[today]) data.notes[today] = [];
+  data.notes[today].push({ id: Date.now(), text, timestamp: new Date().toISOString() });
+  input.value = '';
+  saveData(); renderNotes();
+}
+
+function editNote(date, id) {
+  editingDate = date; editingId = id;
+  const note = data.notes[date]?.find(n => n.id === id);
+  if (!note) return;
+  document.getElementById('editTextarea').value = note.text;
+  document.getElementById('modalOverlay').classList.add('open');
+  setTimeout(() => document.getElementById('editTextarea').focus(), 60);
+}
+
+function saveEdit() {
+  const text = document.getElementById('editTextarea').value.trim();
+  if (!text) return;
+  const note = data.notes[editingDate]?.find(n => n.id === editingId);
+  if (note) { note.text = text; saveData(); renderNotes(); }
+  closeModal();
+}
+
+function deleteNote(date, id) {
+  data.notes[date] = data.notes[date].filter(n => n.id !== id);
+  if (!data.notes[date].length) delete data.notes[date];
+  saveData(); renderNotes();
+}
+
+function closeModal() { document.getElementById('modalOverlay').classList.remove('open'); }
+document.getElementById('modalOverlay').addEventListener('click', e => { if (e.target === document.getElementById('modalOverlay')) closeModal(); });
+
+function renderNotes() {
+  const el = document.getElementById('notesList');
+  const today = getToday();
+  const dates = Object.entries(data.notes).sort((a,b) => b[0].localeCompare(a[0]));
+  if (!dates.length) { el.innerHTML = '<div class="empty">No notes yet. Write your first thought above.</div>'; return; }
+
+  el.innerHTML = dates.map(([date, notes]) => {
+    const isToday = date === today;
+    const groupTitle = formatDate(date);
+    const notesHtml = notes.map(n => `
+      <div class="note-card">
+        <div class="note-dot${isToday ? ' today' : ''}"></div>
+        <div class="note-body"><div class="note-text">${n.text}</div></div>
+        <div class="note-actions">
+          <button class="note-btn edit" onclick="editNote('${date}', ${n.id})" title="Edit">✎</button>
+          <button class="note-btn del" onclick="deleteNote('${date}', ${n.id})" title="Delete">✕</button>
+        </div>
+      </div>`).join('');
+    return `<div class="date-group">
+      <div class="date-group-header"><span class="date-group-name">${groupTitle}</span></div>
+      ${notesHtml}
+    </div>`;
+  }).join('');
+}
+
+document.getElementById('noteInput').addEventListener('keypress', e => { if (e.key === 'Enter') addNote(); });
+document.getElementById('editTextarea').addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+renderNotes();
+</script>
+</body>
+</html>
