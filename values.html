@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Values — The Atlas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --ink:#1a1814; --ink-light:#3d3830; --muted:#7a7165; --faint:#c8bfb0;
+  --paper:#f5f0e8; --paper-warm:#ede6d6; --paper-dark:#ddd3c0; --cream:#faf7f2;
+  --moss:#3d5a3e; --moss-light:#5a7a5b; --moss-pale:#c8d9c8;
+  --rust:#8b3a2a; --rust-light:#b85a40; --rust-pale:#e8c8bc;
+  --amber:#7a5a1a; --amber-pale:#e8d8a8;
+  --font-display:'Playfair Display',Georgia,serif;
+  --font-body:'DM Sans',system-ui,sans-serif;
+  --tr:0.25s cubic-bezier(0.4,0,0.2,1);
+  --pad:clamp(1rem,4vw,2.5rem);
+  --safe-top:env(safe-area-inset-top,0px);
+  --safe-bottom:env(safe-area-inset-bottom,0px);
+}
+html{scroll-behavior:smooth;}
+body{background:var(--cream);color:var(--ink);font-family:var(--font-body);font-weight:300;min-height:100vh;}
+
+.site-nav{background:var(--ink);color:var(--paper);padding:calc(0.9rem + var(--safe-top)) var(--pad) 0.9rem;display:flex;align-items:center;gap:0.6rem;position:sticky;top:0;z-index:100;overflow-x:auto;scrollbar-width:none;}
+.site-nav::-webkit-scrollbar{display:none;}
+.nav-brand{font-family:var(--font-display);font-size:1.1rem;font-weight:400;white-space:nowrap;margin-right:0.4rem;flex-shrink:0;}
+.nav-sep{color:rgba(255,255,255,0.15);flex-shrink:0;}
+.nav-link{background:none;border:none;color:rgba(255,255,255,0.5);font-family:var(--font-body);font-size:0.72rem;letter-spacing:0.1em;text-transform:uppercase;padding:0.4rem 0.7rem;border-radius:2rem;cursor:pointer;transition:var(--tr);white-space:nowrap;text-decoration:none;font-weight:400;flex-shrink:0;-webkit-tap-highlight-color:transparent;}
+.nav-link:hover,.nav-link.active{color:var(--paper);background:rgba(255,255,255,0.15);}
+
+.page-wrap{padding:2.5rem var(--pad);padding-bottom:calc(2.5rem + var(--safe-bottom));max-width:700px;}
+.page-title{font-family:var(--font-display);font-size:clamp(2rem,6vw,3rem);font-weight:400;margin-bottom:0.3rem;}
+.page-title em{font-style:italic;color:var(--muted);}
+.page-sub{font-size:0.75rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);margin-bottom:0.7rem;font-weight:400;}
+.page-hint{font-size:0.85rem;color:var(--muted);font-style:italic;font-family:var(--font-display);margin-bottom:2rem;line-height:1.6;}
+
+/* section labels */
+.section-label{font-size:0.65rem;letter-spacing:0.14em;text-transform:uppercase;font-weight:500;margin:0.4rem 0;display:flex;align-items:center;gap:0.7rem;}
+.section-label::before,.section-label::after{content:'';flex:1;height:1px;}
+.section-label.top10{color:var(--amber);}
+.section-label.top10::before,.section-label.top10::after{background:var(--amber-pale);}
+.section-label.rest{color:var(--faint);}
+.section-label.rest::before,.section-label.rest::after{background:var(--paper-dark);}
+
+/* value row */
+.value-item{display:flex;align-items:center;gap:0.75rem;background:var(--paper);border:1px solid var(--paper-dark);border-radius:5px;padding:0.8rem 0.9rem;margin-bottom:0.45rem;cursor:grab;transition:box-shadow 0.2s,border-color 0.2s,opacity 0.2s;user-select:none;-webkit-user-select:none;touch-action:none;-webkit-tap-highlight-color:transparent;}
+.value-item:active{cursor:grabbing;}
+.value-item.top10{background:var(--paper-warm);border-color:rgba(122,90,26,0.2);}
+.value-item.dragging{opacity:0.4;transform:scale(1.015);box-shadow:0 8px 28px rgba(26,24,20,0.14);cursor:grabbing;}
+.drag-handle{color:var(--faint);font-size:0.85rem;flex-shrink:0;line-height:1;}
+.value-rank{font-family:var(--font-display);font-size:1rem;color:var(--faint);width:26px;text-align:right;flex-shrink:0;line-height:1;}
+.value-item.top10 .value-rank{color:var(--amber);}
+.value-name-btn{flex:1;background:none;border:none;text-align:left;cursor:pointer;padding:0;font-family:var(--font-body);font-size:0.9rem;color:var(--ink-light);transition:color 0.15s;-webkit-tap-highlight-color:transparent;}
+.value-name-btn:hover{color:var(--ink);}
+.value-item.top10 .value-name-btn{color:var(--ink);font-weight:400;}
+.arrow-col{display:flex;flex-direction:column;gap:0;flex-shrink:0;}
+.arrow-btn{background:none;border:none;cursor:pointer;color:var(--faint);font-size:0.65rem;line-height:1;padding:0.18rem 0.4rem;transition:color 0.15s;-webkit-tap-highlight-color:transparent;min-height:20px;display:flex;align-items:center;justify-content:center;}
+.arrow-btn:hover{color:var(--ink);}
+
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(26,24,20,0.65);display:flex;align-items:flex-end;justify-content:center;z-index:200;opacity:0;pointer-events:none;transition:opacity 0.2s;padding-bottom:var(--safe-bottom);}
+@media(min-width:520px){.modal-overlay{align-items:center;}}
+.modal-overlay.open{opacity:1;pointer-events:all;}
+.modal{background:var(--cream);border-radius:14px 14px 0 0;padding:2rem;width:100%;max-width:460px;transform:translateY(24px);transition:transform 0.28s cubic-bezier(0.4,0,0.2,1);padding-bottom:calc(2rem + var(--safe-bottom));}
+@media(min-width:520px){.modal{border-radius:8px;padding-bottom:2rem;transform:translateY(14px);}}
+.modal-overlay.open .modal{transform:translateY(0);}
+.modal-rank{font-size:0.62rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--muted);margin-bottom:0.35rem;font-weight:400;}
+.modal-name{font-family:var(--font-display);font-size:2rem;font-weight:400;color:var(--ink);line-height:1.1;margin-bottom:1rem;}
+.modal-divider{height:2px;background:var(--amber-pale);border-radius:2px;width:40px;margin-bottom:1rem;}
+.modal-desc{font-size:0.92rem;color:var(--ink-light);line-height:1.75;margin-bottom:1.5rem;}
+.modal-close{background:var(--paper);border:1px solid var(--paper-dark);color:var(--muted);font-family:var(--font-body);font-size:0.78rem;letter-spacing:0.08em;text-transform:uppercase;padding:0.55rem 1.3rem;border-radius:2rem;cursor:pointer;min-height:44px;transition:var(--tr);-webkit-tap-highlight-color:transparent;}
+.modal-close:hover{border-color:var(--muted);color:var(--ink);}
+</style>
+</head>
+<body>
+<nav class="site-nav">
+  <span class="nav-brand">The Atlas</span>
+  <span class="nav-sep">|</span>
+  <a class="nav-link" href="today.html">Today</a>
+  <a class="nav-link" href="atlas.html">Atlas</a>
+  <a class="nav-link" href="history.html">History</a>
+  <a class="nav-link" href="notes.html">Notes</a>
+  <a class="nav-link active" href="values.html">Values</a>
+  <a class="nav-link" href="selfhelp.html">Self Help</a>
+</nav>
+
+<div class="page-wrap">
+  <h1 class="page-title">Your <em>values.</em></h1>
+  <p class="page-sub">What matters most to you</p>
+  <p class="page-hint">Drag to reorder, or use the arrows. Tap any value to read its meaning. Your top 10 shape the good deeds in Self Help.</p>
+  <div id="valuesList"></div>
+</div>
+
+<!-- Modal -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <div class="modal-rank" id="modalRank"></div>
+    <div class="modal-name" id="modalName"></div>
+    <div class="modal-divider"></div>
+    <div class="modal-desc" id="modalDesc"></div>
+    <button class="modal-close" onclick="closeModal()">Close</button>
+  </div>
+</div>
+
+<script>
+const KEY = 'lt_data';
+const ALL_VALUES = [
+  {name:"Kindness",       desc:"Choosing to improve another person's experience through your actions, especially when they don't deserve it. Kindness is not weakness — it takes courage to extend warmth to those who have not earned it."},
+  {name:"Fairness",       desc:"Ensuring starting conditions and rules do not advantage one person over another. A commitment to fairness means looking beyond outcomes to the systems and structures that shape opportunity."},
+  {name:"Honesty",        desc:"Communicating what you believe to be true without distortion. Honesty is not brutality — it is the discipline of resisting the temptation to tell people what they want to hear."},
+  {name:"Integrity",      desc:"Acting consistently with your principles in spite of what others may feel or encourage. Integrity is visible most clearly when no one is watching."},
+  {name:"Discipline",     desc:"Following through regardless of mood. Discipline is the bridge between intention and achievement — it transforms aspiration into reality through daily, unglamorous effort."},
+  {name:"Ambition",       desc:"A strong drive to achieve high outcomes, often seen at first as unachievable. Healthy ambition stretches your sense of what is possible and propels you toward the edges of your capability."},
+  {name:"Curiosity",      desc:"A desire to explore and understand the unknown. Curiosity is the engine of growth — it keeps the mind open and alive, always asking one more question."},
+  {name:"Creativity",     desc:"Producing novel and unexpected ideas that are new and useful. Creativity is not reserved for artists; it is the capacity to see connections others miss and to bring something genuinely new into the world."},
+  {name:"Courage",        desc:"Acting in spite of fear. Courage is not the absence of fear but the judgement that something else matters more. It is the quality that makes all other virtues possible."},
+  {name:"Compassion",     desc:"Recognising and feeling the suffering of others, and being moved to respond. Compassion differs from sympathy in that it compels action, not merely feeling."},
+  {name:"Respect",        desc:"Treating others as having inherent worth, regardless of status, achievement or appearance. Respect assumes dignity before it is demonstrated — it is given, not earned."},
+  {name:"Loyalty",        desc:"Remaining committed to somebody even during their worst trials. Loyalty is easy in good times; its depth is revealed in difficulty, when it would be convenient to walk away."},
+  {name:"Freedom",        desc:"Having meaningful control over your own actions and life direction. Freedom is not simply the absence of constraint but the presence of genuine choice."},
+  {name:"Forethought",    desc:"Making decisions with long-term awareness. Forethought is the habit of imagining the future consequences of present choices — a form of wisdom that delays gratification in service of something larger."},
+  {name:"Gratitude",      desc:"Valuing what you have, rather than fixating on what you lack. Gratitude is a practice that reorients attention toward abundance and deepens appreciation for ordinary life."},
+  {name:"Humility",       desc:"Maintaining an accurate view of yourself — neither inflated nor diminished. Humility is not self-deprecation; it is the clear-eyed recognition that you are neither better nor worse than the people around you."},
+  {name:"Confidence",     desc:"Trust in your own ability, grounded in evidence and self-knowledge. Healthy confidence is distinct from arrogance — it is a quiet certainty that you can handle what comes."},
+  {name:"Patience",       desc:"Remaining steady and purposeful through long trials. Patience is not passive waiting but active endurance — the capacity to sustain effort and composure when progress is slow."},
+  {name:"Perseverance",   desc:"Continuing in spite of difficulty, setbacks and doubt. Perseverance is the refusal to let obstacles become endings. It transforms failure into a step rather than a conclusion."},
+  {name:"Growth",         desc:"Committing to develop as a human being across every dimension of life. Growth is the orientation that treats your current self as a starting point, not a destination."},
+  {name:"Authenticity",   desc:"Expressing your true self, not what others want or expect to see. Authenticity requires the courage to be legible — to show up as you actually are, even when that feels risky."},
+  {name:"Generosity",     desc:"Giving freely — of time, attention, resources — without expecting return. Generosity is an act of abundance thinking: the belief that there is enough to share."},
+  {name:"Adventurousness",desc:"Taking risks, exploring the unknown, and gaining new experiences along the way. Adventurousness is a disposition toward the world as something to be engaged, not merely endured."},
+  {name:"Excellence",     desc:"Pursuing the highest quality in whatever you undertake. Excellence is not perfectionism — it is the ongoing commitment to closing the gap between what you produce and what you are capable of."},
+  {name:"Openness",       desc:"Being genuinely willing to explore new paths, ideas, and experiences you know nothing about. Openness keeps the mind from calcifying and allows new evidence to change your views."},
+  {name:"Spontaneity",    desc:"Acting without rigid planning, trusting impulse and instinct. Spontaneity introduces aliveness and unpredictability — a willingness to be surprised by your own choices."},
+  {name:"Leadership",     desc:"Helping to guide others toward a worthwhile goal. Leadership is not authority — it is the willingness to take responsibility for something larger than yourself."},
+  {name:"Service",        desc:"Directing your energy toward helping others through concrete action. Service is the outward expression of care — it turns feeling into doing."},
+  {name:"Community",      desc:"Valuing connection with other human beings and the groups they form. Community recognises that individual flourishing is inseparable from the health of the whole."},
+  {name:"Stability",      desc:"Maintaining consistency in your actions and emotions, rather than changing state rapidly without reflection. Stability is the ground from which everything else grows."},
+  {name:"Self-respect",   desc:"Holding yourself to your own standards and refusing to treat yourself as less than you are. Self-respect is not pride — it is the baseline dignity you extend to yourself as a matter of principle."},
+  {name:"Accountability", desc:"Accepting the consequences of your actions without deflection or excuse. Accountability is the practice of owning your choices — even the ones you regret."},
+  {name:"Adaptability",   desc:"Adjusting thoughtfully to change, uncertainty and new information. Adaptability is not mere flexibility — it is the capacity to recalibrate without losing your sense of direction."},
+  {name:"Forgiveness",    desc:"Releasing resentment, for the sake of your own freedom as much as anyone else's. Forgiveness does not require forgetting or condoning — it requires choosing not to be imprisoned by the past."},
+  {name:"Trust",          desc:"Extending confidence in others — their intentions, their reliability, their good faith. Trust is a risk, but it is also the foundation of every meaningful relationship."},
+  {name:"Self-care",      desc:"Tending to yourself with the same consideration you would offer a close friend. Self-care is not indulgence — it is the maintenance of the instrument through which everything else in your life is achieved."}
+];
+
+function loadData() {
+  try {
+    const d = JSON.parse(localStorage.getItem(KEY)) || {};
+    // If values stored are just names (old format) or missing, restore full list
+    if (!d.values || !d.values.length) {
+      d.values = ALL_VALUES.map(v => ({...v}));
+    } else {
+      // Merge: preserve order from stored names, patch in any missing values
+      const storedNames = d.values.map(v => v.name);
+      const full = [];
+      storedNames.forEach(name => {
+        const master = ALL_VALUES.find(v => v.name === name);
+        if (master) full.push({...master});
+      });
+      // Add any values not yet in stored list
+      ALL_VALUES.forEach(v => { if (!storedNames.includes(v.name)) full.push({...v}); });
+      d.values = full;
+    }
+    return d;
+  } catch { return {values: ALL_VALUES.map(v=>({...v}))}; }
+}
+function save() { localStorage.setItem(KEY, JSON.stringify(data)); }
+let data = loadData();
+
+let dragIdx = null, isDragging = false;
+
+function renderValues() {
+  const el = document.getElementById('valuesList');
+  el.innerHTML = '';
+
+  data.values.forEach((v, i) => {
+    if (i === 0) { const lbl = document.createElement('div'); lbl.className='section-label top10'; lbl.textContent='Your top 10'; el.appendChild(lbl); }
+    if (i === 10) { const lbl = document.createElement('div'); lbl.className='section-label rest'; lbl.textContent='The rest'; el.appendChild(lbl); }
+
+    const div = document.createElement('div');
+    div.className = 'value-item' + (i < 10 ? ' top10' : '');
+    div.setAttribute('data-index', i);
+    div.innerHTML = `
+      <span class="drag-handle">⠿</span>
+      <span class="value-rank">${i+1}</span>
+      <button class="value-name-btn" onclick="showModal(${i})">${v.name}</button>
+      <div class="arrow-col">
+        <button class="arrow-btn" onclick="moveUp(${i})" title="Move up">▲</button>
+        <button class="arrow-btn" onclick="moveDown(${i})" title="Move down">▼</button>
+      </div>`;
+
+    div.addEventListener('touchstart', onTouchStart, {passive:false});
+    div.addEventListener('touchmove', onTouchMove, {passive:false});
+    div.addEventListener('touchend', onTouchEnd);
+    div.addEventListener('mousedown', onMouseDown);
+    el.appendChild(div);
+  });
+}
+
+function moveUp(i) {
+  if (i===0) return;
+  [data.values[i], data.values[i-1]] = [data.values[i-1], data.values[i]];
+  save(); renderValues();
+}
+function moveDown(i) {
+  if (i===data.values.length-1) return;
+  [data.values[i], data.values[i+1]] = [data.values[i+1], data.values[i]];
+  save(); renderValues();
+}
+
+function swapNear(y) {
+  document.querySelectorAll('.value-item').forEach((el, idx) => {
+    const r = el.getBoundingClientRect();
+    if (y >= r.top && y <= r.bottom && idx !== dragIdx) {
+      const moved = data.values.splice(dragIdx, 1)[0];
+      data.values.splice(idx, 0, moved);
+      dragIdx = idx; save(); renderValues();
+    }
+  });
+}
+function endDrag() {
+  isDragging = false; dragIdx = null;
+  document.querySelectorAll('.value-item').forEach(el => el.classList.remove('dragging'));
+}
+
+function onTouchStart(e) {
+  dragIdx = parseInt(e.currentTarget.getAttribute('data-index'));
+  isDragging = true;
+  e.currentTarget.classList.add('dragging');
+}
+function onTouchMove(e) {
+  if (!isDragging) return;
+  e.preventDefault();
+  swapNear(e.touches[0].clientY);
+}
+function onTouchEnd() { endDrag(); }
+function onMouseDown(e) {
+  if (e.button !== 0) return;
+  dragIdx = parseInt(e.currentTarget.getAttribute('data-index'));
+  isDragging = true;
+  e.currentTarget.classList.add('dragging');
+}
+document.addEventListener('mousemove', e => { if (isDragging) swapNear(e.clientY); });
+document.addEventListener('mouseup', endDrag);
+document.addEventListener('touchend', endDrag);
+document.addEventListener('touchcancel', endDrag);
+
+// Modal
+function showModal(i) {
+  const v = data.values[i];
+  document.getElementById('modalRank').textContent = `#${i+1} of ${data.values.length}`;
+  document.getElementById('modalName').textContent = v.name;
+  document.getElementById('modalDesc').textContent = v.desc;
+  document.getElementById('modalOverlay').classList.add('open');
+}
+function closeModal() { document.getElementById('modalOverlay').classList.remove('open'); }
+document.getElementById('modalOverlay').addEventListener('click', e => {
+  if (e.target === document.getElementById('modalOverlay')) closeModal();
+});
+
+renderValues();
+</script>
+</body>
+</html>
