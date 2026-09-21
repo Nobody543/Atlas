@@ -323,8 +323,8 @@ body{background:var(--cream);color:var(--ink);font-family:var(--font-body);font-
   </div>
 </div>
 
+<script src="storage.js"></script>
 <script>
-const KEY = 'lt_data';
 const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 
 function getDaysInMonth(m, y) {
@@ -332,16 +332,9 @@ function getDaysInMonth(m, y) {
   return [31,28,29,31,30,31,30,31,31,30,31,30,31][m];
 }
 
-function loadData() {
-  try {
-    const d = JSON.parse(localStorage.getItem(KEY)) || {};
-    if (!d.atlas) d.atlas = {};
-    return d;
-  } catch { return {atlas:{}}; }
-}
-function saveAll() { localStorage.setItem(KEY, JSON.stringify(allData)); }
+function saveAll() { AtlasStorage.save(allData); }
 
-let allData = loadData();
+let allData = {atlas:{}};
 // atlas lives at allData.atlas
 function data() { return allData.atlas; }
 function getYears() { return Object.keys(allData.atlas).map(Number).sort((a,b)=>a-b); }
@@ -568,10 +561,19 @@ function confirmAddYear(){
 document.getElementById('new-year-input').addEventListener('keydown',e=>{if(e.key==='Enter')confirmAddYear();if(e.key==='Escape')closeModal();});
 document.getElementById('modal-overlay').addEventListener('click',e=>{if(e.target===document.getElementById('modal-overlay'))closeModal();});
 
-// Seed if empty
-if(!Object.keys(allData.atlas).length){const yr=new Date().getFullYear();allData.atlas[yr]={goal:'',completed:false,months:{}};saveAll();}
-
-showYearView();
+// Init
+async function init() {
+  allData = await AtlasStorage.load();
+  if (!allData.atlas) allData.atlas = {};
+  // Seed if empty
+  if (!Object.keys(allData.atlas).length) {
+    const yr = new Date().getFullYear();
+    allData.atlas[yr] = {goal:'',completed:false,months:{}};
+    saveAll();
+  }
+  showYearView();
+}
+init();
 </script>
 </body>
 </html>

@@ -220,25 +220,14 @@
   </div>
 </div>
 
+<script src="storage.js"></script>
 <script>
-const KEY = 'lt_data';
 const defaultValues = [
   {name:"Kindness"},{name:"Fairness"},{name:"Honesty"},{name:"Integrity"},{name:"Discipline"},
   {name:"Ambition"},{name:"Curiosity"},{name:"Creativity"},{name:"Courage"},{name:"Compassion"}
 ];
-function loadData() {
-  try {
-    const d = JSON.parse(localStorage.getItem(KEY)) || {};
-    if (!d.habits) d.habits = [];
-    if (!d.values || !d.values.length) d.values = [...defaultValues];
-    if (!d.selfHelp) d.selfHelp = { xp:0, nextRewardDate:null, habitCompletions:{}, goodDeeds:[] };
-    if (!d.selfHelp.habitCompletions) d.selfHelp.habitCompletions = {};
-    if (!d.selfHelp.goodDeeds) d.selfHelp.goodDeeds = [];
-    return d;
-  } catch { return { habits:[], values:[...defaultValues], selfHelp:{xp:0,nextRewardDate:null,habitCompletions:{},goodDeeds:[]} }; }
-}
-function saveData() { localStorage.setItem(KEY, JSON.stringify(data)); }
-let data = loadData();
+function saveData() { AtlasStorage.save(data); }
+let data = { habits:[], values:[...defaultValues], selfHelp:{xp:0,nextRewardDate:null,habitCompletions:{},goodDeeds:[]} };
 
 function getToday() { return new Date().toISOString().split('T')[0]; }
 function formatDate(ds) { return new Date(ds + 'T12:00:00').toLocaleDateString('en-GB', { day:'numeric', month:'long', year:'numeric' }); }
@@ -389,7 +378,16 @@ function renderDeeds() {
 
 document.getElementById('habitInput').addEventListener('keypress', e => { if (e.key === 'Enter') addHabit(); });
 
-renderHabits(); updateDisplay(); renderDeeds(); checkRewards();
+async function init() {
+  data = await AtlasStorage.load();
+  if (!data.habits) data.habits = [];
+  if (!data.values || !data.values.length) data.values = [...defaultValues];
+  if (!data.selfHelp) data.selfHelp = { xp:0, nextRewardDate:null, habitCompletions:{}, goodDeeds:[] };
+  if (!data.selfHelp.habitCompletions) data.selfHelp.habitCompletions = {};
+  if (!data.selfHelp.goodDeeds) data.selfHelp.goodDeeds = [];
+  renderHabits(); updateDisplay(); renderDeeds(); checkRewards();
+}
+init();
 </script>
 </body>
 </html>

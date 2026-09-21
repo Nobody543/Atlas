@@ -107,8 +107,8 @@ body{background:var(--cream);color:var(--ink);font-family:var(--font-body);font-
   </div>
 </div>
 
+<script src="storage.js"></script>
 <script>
-const KEY = 'lt_data';
 const ALL_VALUES = [
   {name:"Kindness",       desc:"Choosing to improve another person's experience through your actions, especially when they don't deserve it. Kindness is not weakness — it takes courage to extend warmth to those who have not earned it."},
   {name:"Fairness",       desc:"Ensuring starting conditions and rules do not advantage one person over another. A commitment to fairness means looking beyond outcomes to the systems and structures that shape opportunity."},
@@ -148,29 +148,26 @@ const ALL_VALUES = [
   {name:"Self-care",      desc:"Tending to yourself with the same consideration you would offer a close friend. Self-care is not indulgence — it is the maintenance of the instrument through which everything else in your life is achieved."}
 ];
 
-function loadData() {
-  try {
-    const d = JSON.parse(localStorage.getItem(KEY)) || {};
-    // If values stored are just names (old format) or missing, restore full list
-    if (!d.values || !d.values.length) {
-      d.values = ALL_VALUES.map(v => ({...v}));
-    } else {
-      // Merge: preserve order from stored names, patch in any missing values
-      const storedNames = d.values.map(v => v.name);
-      const full = [];
-      storedNames.forEach(name => {
-        const master = ALL_VALUES.find(v => v.name === name);
-        if (master) full.push({...master});
-      });
-      // Add any values not yet in stored list
-      ALL_VALUES.forEach(v => { if (!storedNames.includes(v.name)) full.push({...v}); });
-      d.values = full;
-    }
-    return d;
-  } catch { return {values: ALL_VALUES.map(v=>({...v}))}; }
+function applyValuesDefaults(d) {
+  // If values stored are just names (old format) or missing, restore full list
+  if (!d.values || !d.values.length) {
+    d.values = ALL_VALUES.map(v => ({...v}));
+  } else {
+    // Merge: preserve order from stored names, patch in any missing values
+    const storedNames = d.values.map(v => v.name);
+    const full = [];
+    storedNames.forEach(name => {
+      const master = ALL_VALUES.find(v => v.name === name);
+      if (master) full.push({...master});
+    });
+    // Add any values not yet in stored list
+    ALL_VALUES.forEach(v => { if (!storedNames.includes(v.name)) full.push({...v}); });
+    d.values = full;
+  }
+  return d;
 }
-function save() { localStorage.setItem(KEY, JSON.stringify(data)); }
-let data = loadData();
+function save() { AtlasStorage.save(data); }
+let data = { values: ALL_VALUES.map(v => ({...v})) };
 
 let dragIdx = null, isDragging = false;
 
@@ -263,7 +260,11 @@ document.getElementById('modalOverlay').addEventListener('click', e => {
   if (e.target === document.getElementById('modalOverlay')) closeModal();
 });
 
-renderValues();
+async function init() {
+  data = applyValuesDefaults(await AtlasStorage.load());
+  renderValues();
+}
+init();
 </script>
 </body>
 </html>

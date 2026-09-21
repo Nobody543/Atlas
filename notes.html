@@ -197,17 +197,10 @@
   </div>
 </div>
 
+<script src="storage.js"></script>
 <script>
-const KEY = 'lt_data';
-function loadData() {
-  try {
-    const d = JSON.parse(localStorage.getItem(KEY)) || {};
-    if (!d.notes) d.notes = {};
-    return d;
-  } catch { return { notes: {} }; }
-}
-function saveData() { localStorage.setItem(KEY, JSON.stringify(data)); }
-let data = loadData();
+function saveData() { AtlasStorage.save(data); }
+let data = { notes: {} };
 
 function getToday() { return new Date().toISOString().split('T')[0]; }
 function formatDate(ds) {
@@ -288,7 +281,12 @@ function renderNotes() {
 document.getElementById('noteInput').addEventListener('keypress', e => { if (e.key === 'Enter') addNote(); });
 document.getElementById('editTextarea').addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
 
-renderNotes();
+async function init() {
+  data = await AtlasStorage.load();
+  if (!data.notes) data.notes = {};
+  renderNotes();
+}
+init();
 </script>
 </body>
 </html>

@@ -198,19 +198,10 @@
   </div>
 </div>
 
+<script src="storage.js"></script>
 <script>
-const KEY = 'lt_data';
 const defaultValues = [];
-function loadData() {
-  try {
-    const d = JSON.parse(localStorage.getItem(KEY)) || {};
-    if (!d.goals) d.goals = {};
-    if (!d.regularTasks) d.regularTasks = [];
-    if (!d.atlas) d.atlas = {};
-    return d;
-  } catch { return { goals:{}, regularTasks:[], atlas:{} }; }
-}
-let data = loadData();
+let data = { goals:{}, regularTasks:[], atlas:{} };
 
 function getToday() { return new Date().toISOString().split('T')[0]; }
 function formatDate(ds) { return new Date(ds + 'T12:00:00').toLocaleDateString('en-GB', { weekday:'long', year:'numeric', month:'long', day:'numeric' }); }
@@ -357,7 +348,14 @@ function renderHistory(period) {
   }).join('');
 }
 
-renderStats('week');
+async function init() {
+  data = await AtlasStorage.load();
+  if (!data.goals) data.goals = {};
+  if (!data.regularTasks) data.regularTasks = [];
+  if (!data.atlas) data.atlas = {};
+  renderStats('week');
+}
+init();
 </script>
 </body>
 </html>

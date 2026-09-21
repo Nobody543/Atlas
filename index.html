@@ -169,27 +169,24 @@ body{background:var(--cream);color:var(--ink);font-family:var(--font-body);font-
   </div>
 </div>
 
+<script src="storage.js"></script>
 <script>
-const KEY = 'lt_data';
 const WDNAMES = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 
-function loadData() {
-  try {
-    const d = JSON.parse(localStorage.getItem(KEY)) || {};
-    if (!d.goals) d.goals = {};
-    if (!d.regularTasks) d.regularTasks = [];
-    if (!d.tomorrowGoals) d.tomorrowGoals = [];
-    return d;
-  } catch { return {goals:{},regularTasks:[],tomorrowGoals:[]}; }
+function ensureDefaults(d) {
+  if (!d.goals) d.goals = {};
+  if (!d.regularTasks) d.regularTasks = [];
+  if (!d.tomorrowGoals) d.tomorrowGoals = [];
+  return d;
 }
-function save() { localStorage.setItem(KEY, JSON.stringify(data)); }
-let data = loadData();
+function save() { AtlasStorage.save(data); }
+let data = {goals:{},regularTasks:[],tomorrowGoals:[]};
 
 function getToday() { return new Date().toISOString().split('T')[0]; }
 function fmt(ds) { return new Date(ds+'T12:00:00').toLocaleDateString('en-GB',{weekday:'long',year:'numeric',month:'long',day:'numeric'}); }
 
 // New-day check: move tomorrow goals to today
-(function() {
+function rolloverDay() {
   const last = localStorage.getItem('lt_lastVisit');
   const today = getToday();
   if (last !== today) {
@@ -201,7 +198,7 @@ function fmt(ds) { return new Date(ds+'T12:00:00').toLocaleDateString('en-GB',{w
     save();
     localStorage.setItem('lt_lastVisit', today);
   }
-})();
+}
 
 function switchTab(name, btn) {
   document.querySelectorAll('.section-tab').forEach(t => t.classList.remove('active'));
@@ -325,8 +322,13 @@ document.getElementById('tomorrowInput').addEventListener('keypress', e => { if(
 document.getElementById('regInput').addEventListener('keypress', e => { if(e.key==='Enter') addRegular(); });
 
 // Init
-document.getElementById('currentDate').textContent = fmt(getToday());
-renderToday(); renderTomorrow(); renderRegular();
+async function init() {
+  data = ensureDefaults(await AtlasStorage.load());
+  rolloverDay();
+  document.getElementById('currentDate').textContent = fmt(getToday());
+  renderToday(); renderTomorrow(); renderRegular();
+}
+init();
 </script>
 </body>
 </html>
